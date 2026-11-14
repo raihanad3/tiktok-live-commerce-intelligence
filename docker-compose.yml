@@ -1,0 +1,192 @@
+version: '3.8'
+
+networks:
+  tikpulse_network:
+    driver: bridge
+    name: tikpulse_network
+
+volumes:
+  redpanda_data:
+    name: tikpulse_redpanda_data
+  minio_data:
+    name: tikpulse_minio_data
+  postgres_data:
+    name: tikpulse_postgres_data
+  prometheus_data:
+    name: tikpulse_prometheus_data
+  grafana_data:
+    name: tikpulse_grafana_data
+
+services:
+  # ==========================================
+  # 1. MESSAGE BROKER LAYER (Redpanda / Kafka)
+  # ==========================================
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.2.7
+    container_name: tikpulse_redpanda
+    command:
+      - redpanda start
+      - --smp 1
+      - --memory 750M
+      - --overprovisioned
+      - --node-id 0
+      - --kafka-addr PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
+      - --advertise-kafka-addr PLAINTEXT://redpanda:29092,OUTSIDE://localhost:9092
+      - --pandaproxy-addr 0.0.0.0:8082
+      - --advertise-pandaproxy-addr localhost:8082
+    ports:
+      - "${REDPANDA_KAFKA_PORT:-9092}:9092"
+      - "${REDPANDA_ADMIN_PORT:-9644}:9644"
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+    networks:
+      - tikpulse_network
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -E 'HEALTHY|OK' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 800M
+
+  # ==========================================
+  # 2. LAKEHOUSE STORAGE (MinIO / S3)
+  # ==========================================
+  minio:
+    image: minio/minio:RELEASE.2024-05-10T01-41-38Z
+    container_name: tikpulse_minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio_admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio_secure_password_2026}
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - tikpulse_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 300M
+
+  # MinIO Bucket Auto-Creator
+  minio-init:
+    image: minio/mc:latest
+    container_name: tikpulse_minio_init
+    depends_on:
+      minio:
+        condition: service_healthy
+    networks:
+      - tikpulse_network
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER:-minio_admin} ${MINIO_ROOT_PASSWORD:-minio_secure_password_2026};
+      /usr/bin/mc mb myminio/${MINIO_BUCKET_NAME:-tikpulse-lakehouse} || true;
+      /usr/bin/mc anonymous set download myminio/${MINIO_BUCKET_NAME:-tikpulse-lakehouse};
+      exit 0;
+      "
+
+  # ==========================================
+  # 3. RELATIONAL & SERVING MART (PostgreSQL)
+  # ==========================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: tikpulse_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-tikpulse}
+      POSTGRES_USER: ${POSTGRES_USER:-tikpulse_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tikpulse_secure_password_2026}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - tikpulse_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tikpulse_admin} -d ${POSTGRES_DB:-tikpulse}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # ==========================================
+  # 4. OBSERVABILITY: METRICS (Prometheus)
+  # ==========================================
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: tikpulse_prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=7d
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - tikpulse_network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --tries=1 --spider http://localhost:9090/-/healthy || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+  # ==========================================
+  # 5. OBSERVABILITY: DASHBOARD (Grafana)
+  # ==========================================
+  grafana:
+    image: grafana/grafana:11.0.0
+    container_name: tikpulse_grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin_tikpulse}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - tikpulse_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 300M

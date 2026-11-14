@@ -1,0 +1,88 @@
+{
+  "$schema": "https://openlineage.io/spec/1-0-5/OpenLineage.json",
+  "pipeline": "TikPulse-LiveCommerce-Pipeline",
+  "version": "1.0.0",
+  "nodes": [
+    {
+      "id": "source_tiktok_webcast",
+      "type": "StreamSource",
+      "name": "TikTok Live Webcast API",
+      "layer": "Source",
+      "format": "WebSocket/Protobuf Events"
+    },
+    {
+      "id": "source_catalog_csv",
+      "type": "BatchSource",
+      "name": "Katalog Produk CSV",
+      "layer": "Source",
+      "format": "CSV"
+    },
+    {
+      "id": "broker_redpanda_raw",
+      "type": "MessageBroker",
+      "name": "Redpanda: tiktok.events.raw",
+      "layer": "Bronze",
+      "format": "JSON"
+    },
+    {
+      "id": "storage_minio_bronze",
+      "type": "ObjectStorage",
+      "name": "MinIO: bronze/catalog/",
+      "layer": "Bronze",
+      "format": "JSON / Checksum Meta"
+    },
+    {
+      "id": "processor_bronze_to_silver",
+      "type": "StreamingProcessor",
+      "name": "Quality Gate, Deduplication, & ML Inference",
+      "layer": "Silver Processing",
+      "format": "PyArrow / Scikit-Learn"
+    },
+    {
+      "id": "storage_minio_silver",
+      "type": "ObjectStorage",
+      "name": "MinIO: silver/events_parquet/",
+      "layer": "Silver",
+      "format": "Parquet"
+    },
+    {
+      "id": "aggregator_silver_to_gold",
+      "type": "Aggregator",
+      "name": "Session-Scoped Mart Aggregator",
+      "layer": "Gold Processing",
+      "format": "PostgreSQL / SQLite"
+    },
+    {
+      "id": "marts_gold_database",
+      "type": "RelationalDatabase",
+      "name": "Gold Marts: mart_live_summary, mart_product_demand, mart_top_gifters",
+      "layer": "Gold",
+      "format": "SQL Tables"
+    },
+    {
+      "id": "serving_fastapi",
+      "type": "ServingAPI",
+      "name": "FastAPI Cockpit Serving Layer",
+      "layer": "Serving",
+      "format": "REST JSON"
+    },
+    {
+      "id": "visualization_cockpit",
+      "type": "Dashboard",
+      "name": "Live Host Cockpit UI & Grafana",
+      "layer": "Presentation",
+      "format": "Web UI / Chart.js / Grafana"
+    }
+  ],
+  "edges": [
+    { "from": "source_tiktok_webcast", "to": "broker_redpanda_raw" },
+    { "from": "source_catalog_csv", "to": "storage_minio_bronze" },
+    { "from": "broker_redpanda_raw", "to": "processor_bronze_to_silver" },
+    { "from": "storage_minio_bronze", "to": "processor_bronze_to_silver" },
+    { "from": "processor_bronze_to_silver", "to": "storage_minio_silver" },
+    { "from": "storage_minio_silver", "to": "aggregator_silver_to_gold" },
+    { "from": "aggregator_silver_to_gold", "to": "marts_gold_database" },
+    { "from": "marts_gold_database", "to": "serving_fastapi" },
+    { "from": "serving_fastapi", "to": "visualization_cockpit" }
+  ]
+}

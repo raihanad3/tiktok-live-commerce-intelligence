@@ -1,0 +1,50 @@
+groups:
+  - name: tikpulse_alerts
+    rules:
+      # ========================================================
+      # ALERT A (F-15): Batch Ingestion Job Failure
+      # Threshold: Job exit status != 0 atau last successful run > 2 jam
+      # ========================================================
+      - alert: BatchIngestionJobFailed
+        expr: tikpulse_batch_job_last_status == 0
+        for: 1m
+        labels:
+          severity: critical
+          owner: data-engineering-team
+          channel: telegram-alerts
+        annotations:
+          summary: "Batch Catalog Ingestion Job Gagal Dieksekusi"
+          description: "Job batch pembaruan katalog produk toko mengalami error atau exit non-zero pada run terakhir."
+          runbook_url: "docs/runbooks/batch_failure.md"
+
+      # ========================================================
+      # ALERT B (F-15): Stream Processing High Lag / Freshness Delay
+      # Threshold: Konsumsi pesan di Redpanda/Kafka lag > 100 pesan atau delay > 10 detik
+      # ========================================================
+      - alert: StreamConsumerHighLag
+        expr: tikpulse_stream_consumer_lag_messages > 100
+        for: 30s
+        labels:
+          severity: warning
+          owner: stream-ops-team
+          channel: telegram-alerts
+        annotations:
+          summary: "Antrean Pesan Stream TikTok Mengalami Keterlambatan (High Lag)"
+          description: "Consumer lag mencapai {{ $value }} pesan. Aliran komentar tertahan lebih dari 10 detik."
+          runbook_url: "docs/runbooks/stream_lag.md"
+
+      # ========================================================
+      # ALERT C (F-15): Service Resource / Health Unhealthy
+      # Threshold: Service down atau memory usage kritis
+      # ========================================================
+      - alert: CoreServiceDown
+        expr: up == 0
+        for: 15s
+        labels:
+          severity: disaster
+          owner: platform-infra-team
+          channel: telegram-alerts
+        annotations:
+          summary: "Layanan Inti Platform Data Mati / Tidak Merespons"
+          description: "Service {{ $labels.job }} tidak dapat dijangkau (healthcheck gagal)."
+          runbook_url: "docs/runbooks/service_recovery.md"
