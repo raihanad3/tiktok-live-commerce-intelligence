@@ -68,3 +68,36 @@ def test_update_catalog_endpoint():
     assert len(prods) == 2
     assert prods[0]["product_name"] == "Sepatu Test Edition 1"
 
+def test_get_available_niches_endpoint():
+    """Menguji endpoint pengambilan daftar niche yang tersedia (F-10 / Hybrid Niche)."""
+    response = client.get("/api/v1/niches/available", headers={"role": "viewer"})
+    assert response.status_code == 200
+    data = response.json()
+    assert "niches" in data
+    assert data["total_niches"] >= 7
+    keys = [n["key"] for n in data["niches"]]
+    assert "fashion" in keys
+    assert "sports" in keys
+    assert "skincare" in keys
+
+def test_switch_session_with_niche_override():
+    """Menguji beralih toko dengan manual niche override."""
+    payload = {
+        "username": "@ambiguous_shop_123",
+        "niche_override": "kuliner"
+    }
+    response = client.post("/api/v1/session/switch", json=payload, headers={"role": "viewer"})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["niche"] == "culinary"
+    assert data["niche_override_used"] is True
+
+def test_hybrid_niche_detection_hash_consistency():
+    """Menguji konsistensi hash-based smart random assignment untuk username ambigu."""
+    from common.store_catalog import detect_store_niche
+    niche_1 = detect_store_niche("@tokomisterix")
+    niche_2 = detect_store_niche("@tokomisterix")
+    assert niche_1 == niche_2
+    assert niche_1 in ["fashion", "sports", "shoes", "skincare", "hijab", "gadgets", "culinary"]
+
+

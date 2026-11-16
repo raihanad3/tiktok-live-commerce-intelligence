@@ -72,6 +72,7 @@ ml_model = processor.model
 # Global State untuk Continuous Streaming & Live Scraping
 active_streamer = "@tokobajumurah"
 active_session_id = f"sess_{int(time.time())}_tokobajumurah"
+active_niche = detect_store_niche(active_streamer)
 is_streaming_active = True
 is_simulation_enabled = False       # Default False: Tidak membuat komentar palsu
 stream_mode = "OFFLINE"             # "REALTIME_TIKTOK_LIVE" | "OFFLINE" | "SIMULATION_FALLBACK"
@@ -342,7 +343,7 @@ async def continuous_stream_worker():
                         }
                     }
                 else:
-                    comments_pool = get_store_comments(active_streamer)
+                    comments_pool = get_store_comments(active_streamer, niche_override=active_niche)
                     comm = random.choice(comments_pool)
                     user = random.choice(SAMPLE_BUYERS)
                     raw_event = {
@@ -405,11 +406,12 @@ def admin_reset_session(
 
 class SwitchSessionRequest(BaseModel):
     username: str
+    niche_override: Optional[str] = None
 
 @app.post("/api/v1/session/switch", tags=["Session"])
 async def switch_session(req: SwitchSessionRequest, role: str = Header("viewer")):
     """Beralih ke akun TikTok Live lain. Jika akun sedang live, otomatis menyerap komentar asli secara real-time. Jika offline, sistem menampilkan status Toko Sedang Tidak Live tanpa data palsu."""
-    global active_streamer, active_session_id, recent_comments_buffer
+    global active_streamer, active_session_id, recent_comments_buffer, active_niche
     global tiktok_client_instance, is_real_live_connected, stream_mode, is_simulation_enabled
     verify_access(role, "viewer")
 
@@ -431,9 +433,18 @@ async def switch_session(req: SwitchSessionRequest, role: str = Header("viewer")
     active_session_id = f"sess_{int(time.time())}_{clean_user.replace('@', '')}"
     recent_comments_buffer.clear()
 
+    # Cek apakah user menggunakan manual niche override
+    niche_override_used = False
+    from common.store_catalog import STORE_NICHES, normalize_niche_key
+    norm_override = normalize_niche_key(req.niche_override)
+    if norm_override and norm_override in STORE_NICHES:
+        active_niche = norm_override
+        niche_override_used = True
+    else:
+        active_niche = detect_store_niche(active_streamer)
+
     # Coba hubungkan langsung ke siaran live TikTok asli
     connected_real = await try_connect_tiktok_live(clean_user)
-    niche_name = detect_store_niche(active_streamer)
 
     if connected_real:
         stream_mode = "REALTIME_TIKTOK_LIVE"
@@ -448,7 +459,8 @@ async def switch_session(req: SwitchSessionRequest, role: str = Header("viewer")
         "session_id": active_session_id,
         "stream_mode": stream_mode,
         "is_real_live": connected_real,
-        "niche": niche_name,
+        "niche": active_niche,
+        "niche_override_used": niche_override_used,
         "new_events_processed": len(recent_comments_buffer),
         "message": msg
     }
@@ -495,6 +507,26 @@ def get_live_comments(role: str = Header("viewer")):
         "comments": recent_comments_buffer[:20]
     }
 
+@app.get("/api/v1/niches/available", tags=["System"])
+def get_available_niches(role: str = Header("viewer")):
+    """Mengambil daftar niche yang tersedia untuk manual override."""
+    verify_access(role, "viewer")
+    from common.store_catalog import STORE_NICHES
+    niches_info = []
+    for key, data in STORE_NICHES.items():
+        niches_info.append({
+            "key": key,
+            "category": data["category"],
+            "keywords": data["keywords"][:5],
+            "total_products": len(data["products"]),
+            "total_comments": len(data.get("comments", []))
+        })
+    return {
+        "total_niches": len(niches_info),
+        "niches": niches_info,
+        "note": "Gunakan 'key' sebagai parameter niche_override saat switch session"
+    }
+
 @app.get("/api/v1/health", tags=["System"])
 def health_check():
     return {
@@ -502,6 +534,7 @@ def health_check():
         "service": "tikpulse-serving-api",
         "streamer": active_streamer,
         "session_id": active_session_id,
+        "active_niche": active_niche,
         "stream_mode": stream_mode,
         "is_real_live": is_real_live_connected,
         "is_simulation_enabled": is_simulation_enabled,
@@ -593,7 +626,7 @@ def get_product_demand(
 
             # Fallback 2: Jika belum ada permintaan live, tampilkan katalog toko aktif dengan 0 permintaan (Jujur & Akurat)
             if not rows:
-                cat_df = get_store_catalog(active_streamer)
+                cat_df = get_store_catalog(active_streamer, niche_override=active_niche)
                 for _, r in cat_df.head(limit).iterrows():
                     rows.append({
                         "etalase_no": int(r["etalase_no"]),
@@ -610,7 +643,7 @@ def get_product_demand(
                 "session_id": active_session_id,
                 "stream_mode": stream_mode,
                 "is_real_live": is_real_live_connected,
-                "niche": detect_store_niche(active_streamer),
+                "niche": active_niche,
                 "leaderboard": rows,
                 "query_time": datetime.now(timezone.utc).isoformat()
             }
@@ -707,15 +740,16 @@ class UpdateCatalogRequest(BaseModel):
     products: List[CatalogProductItem]
 
 @app.get("/api/v1/catalog", tags=["Store Catalog"])
-def get_catalog_endpoint(streamer: Optional[str] = Query(None), role: str = Header("viewer")):
+def get_catalog_endpoint(streamer: Optional[str] = Query(None), niche_override: Optional[str] = Query(None), role: str = Header("viewer")):
     """Mengambil katalog produk resmi atau kustom toko aktif."""
     verify_access(role, "viewer")
     target_streamer = streamer or active_streamer
-    df = get_store_catalog(target_streamer)
+    target_niche = niche_override or (active_niche if target_streamer == active_streamer else detect_store_niche(target_streamer))
+    df = get_store_catalog(target_streamer, niche_override=target_niche)
     products = df.to_dict(orient="records") if not df.empty else []
     return {
         "streamer": target_streamer,
-        "niche": detect_store_niche(target_streamer),
+        "niche": target_niche,
         "total_products": len(products),
         "products": products
     }

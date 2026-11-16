@@ -92,12 +92,22 @@
           </div>
         </div>
 
-        <div class="flex items-center space-x-2 flex-1 max-w-lg">
-          <div class="relative w-full">
+        <div class="flex items-center space-x-2 flex-1 max-w-xl">
+          <div class="relative flex-1">
             <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500 text-sm">@</span>
             <input type="text" id="targetUsername" value="tokobajumurah" placeholder="ketik username toko tiktok..." onkeydown="if(event.key === 'Enter') switchStore()" class="w-full bg-slate-950 border border-slate-700 text-white rounded-xl pl-8 pr-4 py-2 text-sm focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500">
           </div>
-          <button id="btnSwitch" onclick="switchStore()" class="px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white rounded-xl text-sm font-medium transition shadow-lg shadow-pink-500/20 whitespace-nowrap flex items-center space-x-1.5">
+          <select id="nicheOverride" class="bg-slate-950 border border-slate-700 text-white rounded-xl px-2.5 py-2 text-xs focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 shrink-0">
+            <option value="">✨ Auto-Detect Niche</option>
+            <option value="fashion">👕 Fashion & Distro</option>
+            <option value="sports">🏸 Olahraga & Sport</option>
+            <option value="shoes">👟 Sepatu & Footwear</option>
+            <option value="skincare">✨ Skincare & Beauty</option>
+            <option value="hijab">🧕 Hijab & Muslimah</option>
+            <option value="gadget">📱 Gadget & Aksesoris</option>
+            <option value="kuliner">☕ Kuliner & Makanan</option>
+          </select>
+          <button id="btnSwitch" onclick="switchStore()" class="px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white rounded-xl text-sm font-medium transition shadow-lg shadow-pink-500/20 whitespace-nowrap flex items-center space-x-1.5 shrink-0">
             <span>Ganti Toko & Pantau</span>
           </button>
         </div>
@@ -106,25 +116,25 @@
       <!-- QUICK CLICK PRESET STORE PILLS -->
       <div class="pt-2 border-t border-slate-800/80 flex items-center space-x-2 overflow-x-auto text-xs pb-1 scrollbar-none">
         <span class="text-slate-400 shrink-0 font-medium text-[11px]">Pilih Cepat Niche Toko:</span>
-        <button onclick="quickSelectStore('@Raysportindo')" class="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-pink-500/20 hover:text-pink-300 border border-slate-700 shrink-0 transition flex items-center space-x-1">
+        <button onclick="quickSelectStore('@Raysportindo', 'sports')" class="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-pink-500/20 hover:text-pink-300 border border-slate-700 shrink-0 transition flex items-center space-x-1">
           <span>🏸</span><span>@Raysportindo (Badminton)</span>
         </button>
-        <button onclick="quickSelectStore('@aerostreet')" class="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-pink-500/20 hover:text-pink-300 border border-slate-700 shrink-0 transition flex items-center space-x-1">
+        <button onclick="quickSelectStore('@aerostreet', 'shoes')" class="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-pink-500/20 hover:text-pink-300 border border-slate-700 shrink-0 transition flex items-center space-x-1">
           <span>👟</span><span>@aerostreet (Sepatu)</span>
         </button>
-        <button onclick="quickSelectStore('@somethincofficial')" class="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-pink-500/20 hover:text-pink-300 border border-slate-700 shrink-0 transition flex items-center space-x-1">
+        <button onclick="quickSelectStore('@somethincofficial', 'skincare')" class="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-pink-500/20 hover:text-pink-300 border border-slate-700 shrink-0 transition flex items-center space-x-1">
           <span>✨</span><span>@somethincofficial (Skincare)</span>
         </button>
-        <button onclick="quickSelectStore('@butik_hijab')" class="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-pink-500/20 hover:text-pink-300 border border-slate-700 shrink-0 transition flex items-center space-x-1">
+        <button onclick="quickSelectStore('@butik_hijab', 'hijab')" class="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-pink-500/20 hover:text-pink-300 border border-slate-700 shrink-0 transition flex items-center space-x-1">
           <span>🧕</span><span>@butik_hijab (Muslimah)</span>
         </button>
-        <button onclick="quickSelectStore('@gadget_store')" class="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-pink-500/20 hover:text-pink-300 border border-slate-700 shrink-0 transition flex items-center space-x-1">
+        <button onclick="quickSelectStore('@gadget_store', 'gadget')" class="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-pink-500/20 hover:text-pink-300 border border-slate-700 shrink-0 transition flex items-center space-x-1">
           <span>📱</span><span>@gadget_store (Gadget)</span>
         </button>
-        <button onclick="quickSelectStore('@kopi_kenangan')" class="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-pink-500/20 hover:text-pink-300 border border-slate-700 shrink-0 transition flex items-center space-x-1">
+        <button onclick="quickSelectStore('@kopi_kenangan', 'kuliner')" class="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-pink-500/20 hover:text-pink-300 border border-slate-700 shrink-0 transition flex items-center space-x-1">
           <span>☕</span><span>@kopi_kenangan (Kuliner)</span>
         </button>
-        <button onclick="quickSelectStore('@erigostore')" class="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-pink-500/20 hover:text-pink-300 border border-slate-700 shrink-0 transition flex items-center space-x-1">
+        <button onclick="quickSelectStore('@erigostore', 'fashion')" class="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-pink-500/20 hover:text-pink-300 border border-slate-700 shrink-0 transition flex items-center space-x-1">
           <span>👕</span><span>@erigostore (Distro)</span>
         </button>
       </div>
@@ -454,8 +464,9 @@
       }
     }
 
-    function quickSelectStore(username) {
+    function quickSelectStore(username, niche = '') {
       document.getElementById('targetUsername').value = username.replace('@', '');
+      document.getElementById('nicheOverride').value = niche;
       switchStore();
     }
 
@@ -478,13 +489,19 @@
       `;
 
       try {
+        const nicheOverride = document.getElementById('nicheOverride').value;
+        const requestBody = { username: inputVal };
+        if (nicheOverride) {
+          requestBody.niche_override = nicheOverride;
+        }
+
         const resp = await fetch('/api/v1/session/switch', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'X-User-Role': 'viewer'
           },
-          body: JSON.stringify({ username: inputVal })
+          body: JSON.stringify(requestBody)
         });
 
         if (resp.ok) {
@@ -493,7 +510,11 @@
           document.getElementById('activeStoreBadge').innerText = `Aktif: ${resJson.streamer}`;
           document.getElementById('targetUsername').value = resJson.streamer.replace('@', '');
           if (resJson.niche) {
-            document.getElementById('nicheBadge').innerText = resJson.niche.toUpperCase();
+            let nicheDisplay = resJson.niche.toUpperCase();
+            if (resJson.niche_override_used) {
+              nicheDisplay += ' (MANUAL)';
+            }
+            document.getElementById('nicheBadge').innerText = nicheDisplay;
           }
 
           // Bersihkan chat feed dan reset memori komentar

@@ -241,13 +241,57 @@ STORE_NICHES = {
     }
 }
 
-def detect_store_niche(streamer: str) -> str:
-    """Mendeteksi niche toko secara cerdas dari username."""
+NICHE_ALIASES = {
+    "kuliner": "culinary",
+    "gadget": "gadgets",
+    "sport": "sports",
+    "shoe": "shoes",
+    "baju": "fashion",
+    "beauty": "skincare"
+}
+
+def normalize_niche_key(key: str) -> str:
+    if not key:
+        return ""
+    k = str(key).lower().strip()
+    return NICHE_ALIASES.get(k, k)
+
+def detect_store_niche(streamer: str, force_assign: bool = True) -> str:
+    """
+    Mendeteksi niche toko secara cerdas dari username.
+    
+    Args:
+        streamer: Username TikTok (e.g. @tokobajumurah)
+        force_assign: Jika True, akan random assign niche secara konsisten (hash-based) bila tidak ada keyword match
+    """
     st = streamer.lower().replace("@", "").replace("_", "").replace(".", "")
+
+    # Priority 1: Brand khusus yang sudah terdaftar
+    for brand_key in BRAND_CATALOGS.keys():
+        if brand_key in st or brand_key in streamer.lower():
+            if brand_key == "somethinc":
+                return "skincare"
+            elif brand_key == "aerostreet":
+                return "shoes"
+            elif brand_key == "ray":
+                return "sports"
+            elif brand_key == "erigo":
+                return "fashion"
+
+    # Priority 2: Keyword matching dari username
     for niche_key, data in STORE_NICHES.items():
         for kw in data["keywords"]:
             if kw in st or kw in streamer.lower():
                 return niche_key
+
+    # Priority 3: Smart consistent hash-based assignment (Hybrid Niche Detection)
+    if force_assign:
+        import hashlib
+        hash_obj = hashlib.md5(streamer.encode("utf-8"))
+        hash_int = int(hash_obj.hexdigest(), 16)
+        niche_keys = list(STORE_NICHES.keys())
+        return niche_keys[hash_int % len(niche_keys)]
+
     return "universal"
 
 def clean_store_title(streamer: str) -> str:
@@ -263,8 +307,8 @@ def save_custom_store_catalog(streamer: str, products_list: list) -> bool:
         json.dump(products_list, f, indent=2, ensure_ascii=False)
     return True
 
-def get_store_catalog(streamer: str) -> pd.DataFrame:
-    """Mengembalikan katalog produk toko (Kustom Toko > Katalog Brand Resmi > Niche Catalog > Universal)."""
+def get_store_catalog(streamer: str, niche_override: str = None) -> pd.DataFrame:
+    """Mengembalikan katalog produk toko (Kustom Toko > Manual Niche Override > Brand Resmi > Niche Catalog > Universal)."""
     clean = streamer.lower().replace("@", "").strip()
     
     # 1. Cek apakah ada katalog kustom yang disimpan pengguna untuk toko ini
@@ -288,7 +332,24 @@ def get_store_catalog(streamer: str) -> pd.DataFrame:
         except Exception as e:
             print(f"[CUSTOM CATALOG ERROR] {e}")
 
-    # 2. Cek apakah streamer cocok dengan brand spesifik resmi
+    # 2. Manual Niche Override jika dipilih pengguna
+    norm_override = normalize_niche_key(niche_override)
+    if norm_override and norm_override in STORE_NICHES:
+        rows = STORE_NICHES[norm_override]["products"]
+        data = []
+        for r in rows:
+            data.append({
+                "etalase_no": r[0],
+                "sku": r[1],
+                "product_name": r[2],
+                "category": STORE_NICHES[norm_override]["category"],
+                "price_idr": r[3],
+                "stock": r[4],
+                "keywords": r[5]
+            })
+        return pd.DataFrame(data)
+
+    # 3. Cek apakah streamer cocok dengan brand spesifik resmi
     for brand_key, brand_data in BRAND_CATALOGS.items():
         if brand_key in clean:
             data = []
@@ -304,7 +365,7 @@ def get_store_catalog(streamer: str) -> pd.DataFrame:
                 })
             return pd.DataFrame(data)
 
-    # 3. Niche Fallback
+    # 4. Niche Fallback (Auto-detect / Smart hash)
     niche = detect_store_niche(streamer)
     if niche in STORE_NICHES:
         rows = STORE_NICHES[niche]["products"]
@@ -321,7 +382,7 @@ def get_store_catalog(streamer: str) -> pd.DataFrame:
             })
         return pd.DataFrame(data)
 
-    # 4. Universal Fallback
+    # 5. Universal Fallback
     title = clean_store_title(streamer)
     items = [
         (1, f"{title} - Produk Terlaris No. 1 Best Seller", 89000, 50, "terlaris,bestseller,no1"),
@@ -348,9 +409,10 @@ def get_store_catalog(streamer: str) -> pd.DataFrame:
         })
     return pd.DataFrame(data)
 
-def get_store_comments(streamer: str) -> list[str]:
+def get_store_comments(streamer: str, niche_override: str = None) -> list[str]:
     """Mengembalikan daftar komentar simulasi yang sesuai jika dibutuhkan."""
-    niche = detect_store_niche(streamer)
+    norm_override = normalize_niche_key(niche_override)
+    niche = norm_override if (norm_override and norm_override in STORE_NICHES) else detect_store_niche(streamer)
     if niche in STORE_NICHES:
         return STORE_NICHES[niche]["comments"]
     else:
