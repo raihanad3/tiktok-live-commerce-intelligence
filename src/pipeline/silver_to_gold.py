@@ -202,6 +202,8 @@ def aggregate_silver_to_gold():
                     INSERT INTO mart_product_demand (session_id, streamer, etalase_no, product_name, price_idr, request_count, high_intent_count, last_requested_at)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     ON CONFLICT (session_id, etalase_no) DO UPDATE SET
+                        product_name = EXCLUDED.product_name,
+                        price_idr = EXCLUDED.price_idr,
                         request_count = EXCLUDED.request_count,
                         high_intent_count = EXCLUDED.high_intent_count,
                         last_requested_at = EXCLUDED.last_requested_at;
@@ -211,6 +213,8 @@ def aggregate_silver_to_gold():
                     INSERT INTO mart_product_demand (session_id, streamer, etalase_no, product_name, price_idr, request_count, high_intent_count, last_requested_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT (session_id, etalase_no) DO UPDATE SET
+                        product_name = excluded.product_name,
+                        price_idr = excluded.price_idr,
                         request_count = excluded.request_count,
                         high_intent_count = excluded.high_intent_count,
                         last_requested_at = excluded.last_requested_at;

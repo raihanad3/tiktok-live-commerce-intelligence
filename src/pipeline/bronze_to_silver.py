@@ -65,15 +65,22 @@ class BronzeToSilverProcessor:
         if match:
             return int(match.group(1))
 
-        # Pola 2: Cocokkan kata kunci produk dari katalog
+        # Pola 2: Cocokkan kata kunci produk dari katalog (pilih keyword paling spesifik)
         target_df = catalog_df if catalog_df is not None and not catalog_df.empty else self.catalog_df
         if not target_df.empty:
             text_lower = text.lower()
+            best_match = None
+            max_kw_len = 0
             for _, row in target_df.iterrows():
                 keywords = str(row.get("keywords", "")).split(",")
                 for kw in keywords:
-                    if kw.strip() and kw.strip().lower() in text_lower:
-                        return int(row["etalase_no"])
+                    kw_clean = kw.strip().lower()
+                    if kw_clean and len(kw_clean) >= 3 and kw_clean in text_lower:
+                        if len(kw_clean) > max_kw_len:
+                            max_kw_len = len(kw_clean)
+                            best_match = int(row["etalase_no"])
+            if best_match:
+                return best_match
         return None
 
     @staticmethod
@@ -81,18 +88,19 @@ class BronzeToSilverProcessor:
         """Mengekstrak kemungkinan subjek/nama produk dari komentar live jika belum ada di katalog resmi."""
         if not text:
             return ""
-        # Hapus kata-kata percakapan umum live stream
+        # Hapus kata-kata percakapan umum live stream menggunakan \b (word boundaries) agar kata dasar tetap utuh
         cleaned = re.sub(
-            r'(?:kak|min|host|tolong|dong|spill|eta|etls|etalase|nomor|no|co|checkout|ready|ga|gak|ada|yg|yang|warna|size|ukuran|bisa|cod|promo|diskon|murah|banget|nih|ya|gas|skrg|sekarang|order|beli|cek|in|ke|dari|untuk|buat|mau|\?|\!|\#|[0-9]+)',
+            r'\b(?:kak|kakak|ka|min|mimin|host|tolong|dong|spill|etalase|etls|eta|nomor|no|checkout|co|ready|ga|gak|ngga|nggak|ada|yg|yang|warna|size|ukuran|bisa|cod|promo|diskon|murah|banget|nih|ya|gas|skrg|sekarang|order|beli|cek|in|ke|dari|untuk|buat|mau|saya|sy|sdh|udh|udah|aku|ku|plis|please|\#|[0-9]+)\b',
             ' ',
             text,
             flags=re.IGNORECASE
         )
+        cleaned = re.sub(r'[\?\!\#\*\@\(\)\[\]\.\,\:\;]', ' ', cleaned)
         cleaned = re.sub(r'\s+', ' ', cleaned).strip()
         words = cleaned.split()
         if words:
             sub = " ".join(words[:4]).strip()
-            if len(sub) >= 3:
+            if len(sub) >= 2:
                 return sub.title()
         return ""
 

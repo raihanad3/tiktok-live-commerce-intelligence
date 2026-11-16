@@ -599,54 +599,85 @@ def get_product_demand(
     """Mengambil leaderboard permintaan produk KHUSUS sesi toko yang sedang aktif."""
     verify_access(role, "viewer")
     try:
+        # 1. Ambil katalog resmi/kustom toko aktif
+        cat_df = get_store_catalog(active_streamer, niche_override=active_niche)
+        cat_map = {}
+        if not cat_df.empty:
+            for _, r in cat_df.iterrows():
+                cat_map[int(r["etalase_no"])] = {
+                    "product_name": str(r["product_name"]),
+                    "price_idr": int(r["price_idr"])
+                }
+
+        # 2. Ambil permintaan produk dari database untuk sesi ini
+        demand_rows_map = {}
         with DatabaseContext() as db:
             cur = db.execute_query("""
                 SELECT etalase_no, product_name, price_idr, request_count, high_intent_count, last_requested_at
                 FROM mart_product_demand
                 WHERE session_id = %s
-                ORDER BY request_count DESC, high_intent_count DESC
-                LIMIT %s;
-            """, (active_session_id, limit))
-            rows = [dict(r) for r in cur.fetchall()]
+                ORDER BY request_count DESC, high_intent_count DESC;
+            """, (active_session_id,))
+            for r in cur.fetchall():
+                d = dict(r)
+                et = int(d["etalase_no"])
+                # Selaraskan nama produk dan harga dari katalog resmi/kustom
+                if et in cat_map:
+                    d["product_name"] = cat_map[et]["product_name"]
+                    d["price_idr"] = cat_map[et]["price_idr"]
+                demand_rows_map[et] = d
 
-            # Fallback 1: Hitung dari recent_comments_buffer jika ada event yang masuk
-            if not rows and recent_comments_buffer:
-                counts = {}
-                for c in recent_comments_buffer:
-                    et = c.get("extracted_etalase")
-                    if et:
-                        pname = c.get("matched_product_name") or f"Etalase #{et}"
-                        price = c.get("matched_price_idr") or 85000
-                        if et not in counts:
-                            counts[et] = {"etalase_no": et, "product_name": pname, "price_idr": price, "request_count": 0, "high_intent_count": 0}
-                        counts[et]["request_count"] += 1
-                        if c.get("ml_intent") == "INTENT_BUY":
-                            counts[et]["high_intent_count"] += 1
-                rows = sorted(counts.values(), key=lambda x: x["request_count"], reverse=True)[:limit]
+        # 3. Sinkronkan juga dengan buffer komentar langsung in-memory
+        if recent_comments_buffer:
+            for c in recent_comments_buffer:
+                et = c.get("extracted_etalase")
+                if et:
+                    et = int(et)
+                    pname = cat_map.get(et, {}).get("product_name") or c.get("matched_product_name") or f"Etalase #{et}"
+                    price = cat_map.get(et, {}).get("price_idr") or c.get("matched_price_idr") or 85000
+                    c["matched_product_name"] = pname
+                    c["matched_price_idr"] = price
+                    if et not in demand_rows_map:
+                        demand_rows_map[et] = {
+                            "etalase_no": et,
+                            "product_name": pname,
+                            "price_idr": price,
+                            "request_count": 0,
+                            "high_intent_count": 0,
+                            "last_requested_at": c.get("event_time")
+                        }
 
-            # Fallback 2: Jika belum ada permintaan live, tampilkan katalog toko aktif dengan 0 permintaan (Jujur & Akurat)
-            if not rows:
-                cat_df = get_store_catalog(active_streamer, niche_override=active_niche)
-                for _, r in cat_df.head(limit).iterrows():
-                    rows.append({
-                        "etalase_no": int(r["etalase_no"]),
+        # 4. Urutkan berdasarkan etalase paling banyak diminta
+        sorted_demand = sorted(demand_rows_map.values(), key=lambda x: (x["request_count"], x["high_intent_count"]), reverse=True)
+
+        # 5. Lengkapi hingga 'limit' item (default 5) menggunakan katalog toko aktif
+        existing_etalases = {r["etalase_no"] for r in sorted_demand}
+        final_leaderboard = list(sorted_demand[:limit])
+        if len(final_leaderboard) < limit and not cat_df.empty:
+            for _, r in cat_df.iterrows():
+                et = int(r["etalase_no"])
+                if et not in existing_etalases:
+                    final_leaderboard.append({
+                        "etalase_no": et,
                         "product_name": str(r["product_name"]),
                         "price_idr": int(r["price_idr"]),
                         "request_count": 0,
                         "high_intent_count": 0,
                         "last_requested_at": None
                     })
+                    if len(final_leaderboard) >= limit:
+                        break
 
-            return {
-                "total_products": len(rows),
-                "streamer": active_streamer,
-                "session_id": active_session_id,
-                "stream_mode": stream_mode,
-                "is_real_live": is_real_live_connected,
-                "niche": active_niche,
-                "leaderboard": rows,
-                "query_time": datetime.now(timezone.utc).isoformat()
-            }
+        return {
+            "total_products": len(final_leaderboard),
+            "streamer": active_streamer,
+            "session_id": active_session_id,
+            "stream_mode": stream_mode,
+            "is_real_live": is_real_live_connected,
+            "niche": active_niche,
+            "leaderboard": final_leaderboard,
+            "query_time": datetime.now(timezone.utc).isoformat()
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database query error: {str(e)}")
 

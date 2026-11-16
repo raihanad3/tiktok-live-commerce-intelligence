@@ -851,12 +851,17 @@
       const streamerName = document.getElementById('modalStreamerName');
       const statusMsg = document.getElementById('catalogStatusMsg');
       const currentStreamer = document.getElementById('targetUsername').value.trim() || 'tokobaju';
+      const currentNiche = document.getElementById('nicheOverride').value || '';
       streamerName.innerText = '@' + currentStreamer.replace('@', '');
       statusMsg.innerText = 'Memuat katalog...';
       modal.classList.remove('hidden');
 
       try {
-        const resp = await fetch(`/api/v1/catalog?streamer=@${currentStreamer.replace('@', '')}`, {
+        let url = `/api/v1/catalog?streamer=@${currentStreamer.replace('@', '')}`;
+        if (currentNiche) {
+          url += `&niche_override=${encodeURIComponent(currentNiche)}`;
+        }
+        const resp = await fetch(url, {
           headers: { 'X-User-Role': 'viewer' }
         });
         if (resp.ok) {
