@@ -16,6 +16,7 @@ import sys
 import time
 import uuid
 import random
+import re
 import asyncio
 import joblib
 import sqlite3
@@ -29,7 +30,7 @@ from datetime import datetime, timezone
 # TikTokLive Scraper integration
 try:
     from TikTokLive import TikTokLiveClient
-    from TikTokLive.events import CommentEvent, GiftEvent, DisconnectEvent, LiveEndEvent
+    from TikTokLive.events import CommentEvent, GiftEvent, DisconnectEvent, LiveEndEvent, OecLiveShoppingEvent
     TIKTOK_LIVE_AVAILABLE = True
 except ImportError:
     TIKTOK_LIVE_AVAILABLE = False
@@ -278,6 +279,68 @@ async def try_connect_tiktok_live(username: str) -> bool:
                 ingest_and_process_event(raw)
             except Exception as e:
                 print(f"[TIKTOK GIFT INGEST ERROR] {e}")
+
+        try:
+            from TikTokLive.events import OecLiveShoppingEvent
+
+            @client.on(OecLiveShoppingEvent)
+            async def on_oec_shopping(event: OecLiveShoppingEvent):
+                """Mendeteksi saat host menyematkan (pin/pop) produk etalase secara live di TikTok."""
+                if not is_streaming_active:
+                    return
+                try:
+                    product_no = getattr(event, "live_product_number", None)
+                    pop = getattr(event, "pop_product", None)
+                    title = getattr(pop, "title", None) if pop else None
+                    price_val = getattr(pop, "price", None) if pop else None
+
+                    if title:
+                        numeric_price = 0
+                        if price_val:
+                            digits = re.sub(r"[^\d]", "", str(price_val))
+                            if digits:
+                                numeric_price = int(digits)
+
+                        prod_num = int(product_no) if product_no else 1
+                        print(f"[TIKTOK SHOPPING PIN] Terdeteksi etalase #{prod_num}: {title} (Rp {numeric_price:,})")
+
+                        existing_df = get_store_catalog(active_streamer, niche_override=active_niche)
+                        existing_items = existing_df.to_dict(orient="records") if not existing_df.empty else []
+
+                        found = False
+                        for p in existing_items:
+                            if p.get("etalase_no") == prod_num:
+                                p["product_name"] = title
+                                if numeric_price > 0:
+                                    p["price_idr"] = numeric_price
+                                found = True
+                                break
+                        if not found:
+                            existing_items.append({
+                                "etalase_no": prod_num,
+                                "product_name": title,
+                                "price_idr": numeric_price or 99000,
+                                "stock": 50
+                            })
+                            existing_items.sort(key=lambda x: x.get("etalase_no", 999))
+
+                        save_custom_store_catalog(active_streamer, existing_items)
+
+                        with DatabaseContext() as db:
+                            db.execute_query(
+                                """
+                                UPDATE mart_product_demand
+                                SET product_name = %s, price_idr = %s
+                                WHERE session_id = %s AND etalase_no = %s;
+                                """,
+                                (title, numeric_price or 99000, active_session_id, prod_num)
+                            )
+                            if hasattr(db.conn, "commit"):
+                                db.conn.commit()
+                except Exception as err:
+                    print(f"[TIKTOK SHOPPING INGEST ERROR] {err}")
+        except Exception as oec_err:
+            pass
 
         @client.on(DisconnectEvent)
         async def on_disconnect(event: DisconnectEvent):

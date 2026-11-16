@@ -938,6 +938,112 @@
       if (container) container.scrollTop = container.scrollHeight;
     }
 
+    function toggleQuickPaste() {
+      const section = document.getElementById('quickPasteSection');
+      const btnText = document.getElementById('quickPasteBtnText');
+      const textarea = document.getElementById('quickPasteText');
+      const isHidden = section.classList.contains('hidden');
+
+      if (isHidden) {
+        section.classList.remove('hidden');
+        btnText.innerText = 'Tutup Tempel Cepat';
+        if (!textarea.value.trim() && currentCatalogItems.length > 0) {
+          // Pre-populate daftar saat ini agar mudah disalin atau dimodifikasi
+          textarea.value = currentCatalogItems.map(item => {
+            const priceStr = Number(item.price_idr || 0).toLocaleString('id-ID');
+            return `${item.etalase_no}. ${item.product_name} - Rp ${priceStr}`;
+          }).join('\n');
+        }
+        textarea.focus();
+      } else {
+        section.classList.add('hidden');
+        btnText.innerText = 'Tempel Cepat (Quick Paste)';
+      }
+    }
+
+    function applyQuickPaste() {
+      const textarea = document.getElementById('quickPasteText');
+      const rawText = textarea.value.trim();
+      const statusMsg = document.getElementById('catalogStatusMsg');
+
+      if (!rawText) {
+        alert('Silakan tempel atau ketik daftar etalase terlebih dahulu!');
+        return;
+      }
+
+      const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      if (lines.length === 0) {
+        alert('Tidak ada baris etalase yang terbaca.');
+        return;
+      }
+
+      const parsedItems = [];
+      let autoNo = 1;
+
+      lines.forEach((line) => {
+        let text = line;
+        let etalaseNo = null;
+
+        // 1. Ekstrak nomor etalase di awal (contoh: "1.", "1 -", "#1", "Etalase 1:", "No 1")
+        const numMatch = text.match(/^(?:etalase|no\.?|#)?\s*(\d+)[\.\:\-\s|)]+/i);
+        if (numMatch) {
+          etalaseNo = parseInt(numMatch[1], 10);
+          text = text.substring(numMatch[0].length).trim();
+        } else {
+          etalaseNo = autoNo;
+        }
+        autoNo = etalaseNo + 1;
+
+        // 2. Ekstrak harga jika ada di akhir atau dipisahkan tanda "-" atau "Rp"
+        let price = 99000;
+        const endPriceMatch = text.match(/[-:\s|]+(?:rp\.?|idr)?\s*(\d{1,3}(?:\.\d{3})+|\d+)\s*(k|rb|ribu)?\s*$/i);
+        const priceMatch = text.match(/[-:\s|]*\b(?:rp\.?|idr)\s*(\d{1,3}(?:\.\d{3})+|\d+)\s*(k|rb|ribu)?\b/i);
+
+        if (endPriceMatch) {
+          let numStr = endPriceMatch[1].replace(/\./g, '');
+          let unit = (endPriceMatch[2] || '').toLowerCase();
+          let baseNum = parseInt(numStr, 10);
+          if (unit === 'k' || unit === 'rb' || unit === 'ribu' || baseNum < 1000) {
+            price = baseNum * 1000;
+          } else {
+            price = baseNum;
+          }
+          text = text.substring(0, text.length - endPriceMatch[0].length).trim();
+        } else if (priceMatch && priceMatch.index > 3) {
+          let numStr = priceMatch[1].replace(/\./g, '');
+          let unit = (priceMatch[2] || '').toLowerCase();
+          let baseNum = parseInt(numStr, 10);
+          if (unit === 'k' || unit === 'rb' || unit === 'ribu' || baseNum < 1000) {
+            price = baseNum * 1000;
+          } else {
+            price = baseNum;
+          }
+          text = (text.substring(0, priceMatch.index) + ' ' + text.substring(priceMatch.index + priceMatch[0].length)).trim();
+        }
+
+        // 3. Bersihkan nama produk
+        text = text.replace(/^[-:\s|]+|[-:\s|]+$/g, '').trim();
+        if (!text) {
+          text = `Etalase #${etalaseNo}`;
+        }
+
+        parsedItems.push({
+          etalase_no: etalaseNo,
+          product_name: text,
+          price_idr: price,
+          stock: 50
+        });
+      });
+
+      if (parsedItems.length > 0) {
+        parsedItems.sort((a, b) => a.etalase_no - b.etalase_no);
+        currentCatalogItems = parsedItems;
+        renderCatalogRows();
+        statusMsg.innerText = `⚡ Diterapkan ${parsedItems.length} produk! Klik "Simpan Perubahan" untuk menyimpan.`;
+        toggleQuickPaste();
+      }
+    }
+
     async function saveCatalog() {
       const btn = document.getElementById('btnSaveCatalog');
       const statusMsg = document.getElementById('catalogStatusMsg');
@@ -1003,8 +1109,31 @@
         <button onclick="closeCatalogModal()" class="text-slate-400 hover:text-white text-xl font-bold p-1 leading-none">&times;</button>
       </div>
 
+      <!-- Quick Paste Bar -->
+      <div class="flex items-center justify-between py-2 border-b border-slate-800">
+        <span class="text-[11px] text-slate-400">Atur etalase di tabel atau tempel teks daftar etalase langsung:</span>
+        <button id="btnToggleQuickPaste" onclick="toggleQuickPaste()" class="text-xs bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 font-semibold px-2.5 py-1 rounded-lg border border-indigo-500/30 transition flex items-center space-x-1">
+          <span>📋</span>
+          <span id="quickPasteBtnText">Tempel Cepat (Quick Paste)</span>
+        </button>
+      </div>
+
+      <!-- Quick Paste Section (Hidden by default) -->
+      <div id="quickPasteSection" class="hidden my-3 space-y-2">
+        <div class="p-3 bg-slate-950/80 rounded-xl border border-slate-800 space-y-2">
+          <p class="text-xs text-slate-300">Tempel atau ketik daftar etalase TikTok toko ini (satu baris per produk):</p>
+          <textarea id="quickPasteText" rows="6" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono" placeholder="Contoh:&#10;1. Somethinc Copy Paste Mesh Cushion - Rp 169.000&#10;2. Somethinc Holyshield Sunscreen - 99000&#10;3. Somethinc Calm Down Moisturizer - 119k&#10;4. Somethinc Ceraplump Lip Glow Balm - 89.000"></textarea>
+          <div class="flex items-center justify-between pt-1">
+            <span class="text-[10px] text-slate-400">Format otomatis: "1. Nama Produk - Harga"</span>
+            <button onclick="applyQuickPaste()" class="px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/30 transition">
+              ⚡ Terapkan ke Tabel
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Modal Body (Table of inputs) -->
-      <div class="overflow-y-auto flex-1 my-3 pr-1 max-h-[50vh]">
+      <div id="catalogTableSection" class="overflow-y-auto flex-1 my-3 pr-1 max-h-[50vh]">
         <table class="w-full text-left text-xs">
           <thead class="text-slate-400 uppercase border-b border-slate-800 sticky top-0 bg-slate-900 z-10">
             <tr>
