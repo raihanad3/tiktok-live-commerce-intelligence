@@ -25,20 +25,45 @@ GOLD_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "data", "gold")
 SQLITE_DB_PATH = os.path.join(GOLD_DIR, "tikpulse_gold.db")
 os.makedirs(GOLD_DIR, exist_ok=True)
 
+IS_POSTGRES_AVAILABLE = None
+
 def get_db_connection():
-    """Mencoba koneksi PostgreSQL, jika offline beralih ke SQLite ACID storage."""
-    try:
-        import psycopg2
-        conn = psycopg2.connect(
-            host=POSTGRES_HOST,
-            port=POSTGRES_PORT,
-            dbname=POSTGRES_DB,
-            user=POSTGRES_USER,
-            password=POSTGRES_PASS,
-            connect_timeout=2
-        )
-        return conn, "POSTGRES"
-    except Exception as e:
+    """Mencoba koneksi PostgreSQL, jika offline beralih cepat ke SQLite ACID storage (dicache agar bebas latensi)."""
+    global IS_POSTGRES_AVAILABLE
+    if IS_POSTGRES_AVAILABLE is None:
+        try:
+            import psycopg2
+            conn = psycopg2.connect(
+                host=POSTGRES_HOST,
+                port=POSTGRES_PORT,
+                dbname=POSTGRES_DB,
+                user=POSTGRES_USER,
+                password=POSTGRES_PASS,
+                connect_timeout=1
+            )
+            IS_POSTGRES_AVAILABLE = True
+            return conn, "POSTGRES"
+        except Exception:
+            IS_POSTGRES_AVAILABLE = False
+            conn = sqlite3.connect(SQLITE_DB_PATH)
+            return conn, "SQLITE"
+    elif IS_POSTGRES_AVAILABLE:
+        try:
+            import psycopg2
+            conn = psycopg2.connect(
+                host=POSTGRES_HOST,
+                port=POSTGRES_PORT,
+                dbname=POSTGRES_DB,
+                user=POSTGRES_USER,
+                password=POSTGRES_PASS,
+                connect_timeout=1
+            )
+            return conn, "POSTGRES"
+        except Exception:
+            IS_POSTGRES_AVAILABLE = False
+            conn = sqlite3.connect(SQLITE_DB_PATH)
+            return conn, "SQLITE"
+    else:
         conn = sqlite3.connect(SQLITE_DB_PATH)
         return conn, "SQLITE"
 

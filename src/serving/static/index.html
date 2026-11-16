@@ -39,7 +39,13 @@
         </div>
       </div>
 
-      <div class="flex items-center space-x-3">
+      <div class="flex items-center space-x-2.5">
+        <!-- Simulasi Demo Toggle Button (Opsional untuk presentasi) -->
+        <button id="btnSimDemo" onclick="toggleSimDemo()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs transition" title="Nyalakan/matikan simulasi jika ingin mencoba saat toko offline">
+          <span id="simIcon">🎭</span>
+          <span id="simText">Simulasi: OFF</span>
+        </button>
+
         <!-- Manual Refresh Button -->
         <button onclick="refreshData()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium transition" title="Refresh data seketika">
           <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
@@ -544,8 +550,12 @@
               document.getElementById('nicheBadge').innerText = d.niche.toUpperCase();
             }
 
-            // Update Stream Mode Badge (Real-Time Scraping vs Demo Replayer)
-            const isReal = jsonSum.is_real_live || (d && d.is_real_live) || (jsonSum.stream_mode === 'REALTIME_TIKTOK_LIVE');
+            // Update Stream Mode Badge (Real-Time Scraping vs Offline vs Demo)
+            const mode = jsonSum.stream_mode || (d && d.stream_mode) || (jsonSum.is_real_live ? 'REALTIME_TIKTOK_LIVE' : 'OFFLINE');
+            const isReal = (mode === 'REALTIME_TIKTOK_LIVE');
+            const isSim = (mode === 'SIMULATION_FALLBACK');
+            const isOffline = (mode === 'OFFLINE');
+
             const modeBadge = document.getElementById('streamModeBadge');
             const modeDot = document.getElementById('modeDot');
             const modeText = document.getElementById('modeText');
@@ -557,11 +567,16 @@
                 modeDot.className = "w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping";
                 modeText.innerText = "🟢 REAL-TIME TIKTOK LIVE";
                 if (chatLabel) chatLabel.innerText = "Live Penonton Asli TikTok";
-              } else {
+              } else if (isSim) {
                 modeBadge.className = "text-[10px] bg-amber-500/20 text-amber-300 font-bold px-2.5 py-0.5 rounded-full border border-amber-500/30 flex items-center space-x-1.5";
                 modeDot.className = "w-1.5 h-1.5 rounded-full bg-amber-400";
-                modeText.innerText = "🟡 DEMO REPLAYER";
-                if (chatLabel) chatLabel.innerText = "Simulasi Niche (Akun Offline)";
+                modeText.innerText = "🟡 MODE SIMULASI DEMO";
+                if (chatLabel) chatLabel.innerText = "Simulasi Demo Niche";
+              } else {
+                modeBadge.className = "text-[10px] bg-rose-500/20 text-rose-300 font-bold px-2.5 py-0.5 rounded-full border border-rose-500/30 flex items-center space-x-1.5";
+                modeDot.className = "w-1.5 h-1.5 rounded-full bg-rose-500";
+                modeText.innerText = "🔴 TOKO SEDANG TIDAK LIVE";
+                if (chatLabel) chatLabel.innerText = "Status: Toko Offline";
               }
             }
 
@@ -652,6 +667,30 @@
                 }
               }
             });
+          } else {
+            // Tampilan saat belum ada komentar / Toko sedang tidak live
+            const isOffline = (!jsonComments.is_real_live && !jsonComments.is_simulation_enabled);
+            if (isOffline) {
+              chatBox.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-8 px-4 text-center space-y-2.5 border border-dashed border-rose-500/30 bg-rose-950/20 rounded-2xl">
+                  <div class="w-10 h-10 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-lg">
+                    🔴
+                  </div>
+                  <div>
+                    <h4 class="text-xs font-bold text-white uppercase tracking-wider">Toko Sedang Tidak Live</h4>
+                    <p class="text-xs text-slate-300 mt-1">Akun <strong class="text-pink-400">${jsonComments.streamer || 'ini'}</strong> saat ini sedang tidak siaran di TikTok.</p>
+                  </div>
+                  <div class="text-[11px] text-slate-400 bg-slate-800/90 px-3 py-1 rounded-lg border border-slate-700">
+                    Menunggu siaran langsung dimulai...
+                  </div>
+                  <p class="text-[10px] text-slate-400">
+                    Ingin melihat data live nyata? Coba toko: <button onclick="quickSelectStore('@somethincofficial')" class="text-cyan-400 hover:text-cyan-300 underline font-bold">@somethincofficial</button>
+                  </p>
+                </div>
+              `;
+            } else {
+              chatBox.innerHTML = '<div class="text-xs text-slate-500 text-center py-8">Menunggu komentar penonton masuk...</div>';
+            }
           }
         }
 
@@ -692,12 +731,28 @@
 
             // Update Copilot Advice
             const topProd = rows[0];
-            document.getElementById('topEtalaseBadge').innerText = `Etalase #${topProd.etalase_no}`;
-            document.getElementById('topEtalaseName').innerText = topProd.product_name;
-            document.getElementById('copilotAdvice').innerHTML = `
-              Host disarankan segera mempromosikan <strong>Etalase #${topProd.etalase_no} (${topProd.product_name})</strong>! 
-              Produk ini sedang mendominasi dengan <strong>${topProd.request_count} permintaan</strong> dan ${topProd.high_intent_count} calon pembeli siap checkout.
-            `;
+            const isOffline = (!jsonProd.is_real_live && !jsonProd.is_simulation_enabled);
+            if (isOffline && rows.every(r => (r.request_count || 0) === 0)) {
+              document.getElementById('topEtalaseBadge').innerText = 'Status Siaran';
+              document.getElementById('topEtalaseName').innerText = 'Toko Sedang Offline';
+              document.getElementById('copilotAdvice').innerHTML = `
+                🔴 <strong>Toko sedang tidak live.</strong> Sistem TikPulse dalam posisi standby memantau siaran <strong>${jsonProd.streamer || ''}</strong>. 
+                Rekomendasi etalase akan otomatis memprioritaskan produk paling diminati seketika siaran langsung dimulai.
+              `;
+            } else if (topProd && topProd.request_count > 0) {
+              document.getElementById('topEtalaseBadge').innerText = `Etalase #${topProd.etalase_no}`;
+              document.getElementById('topEtalaseName').innerText = topProd.product_name;
+              document.getElementById('copilotAdvice').innerHTML = `
+                Host disarankan segera mempromosikan <strong>Etalase #${topProd.etalase_no} (${topProd.product_name})</strong>! 
+                Produk ini sedang mendominasi dengan <strong>${topProd.request_count} permintaan</strong> dan ${topProd.high_intent_count} calon pembeli siap checkout.
+              `;
+            } else {
+              document.getElementById('topEtalaseBadge').innerText = 'Katalog Siap';
+              document.getElementById('topEtalaseName').innerText = topProd ? topProd.product_name : 'Menunggu Siaran';
+              document.getElementById('copilotAdvice').innerHTML = `
+                Katalog produk toko telah tersinkronisasi. Rekomendasi promosi akan muncul otomatis setelah ada komentar penonton di siaran live.
+              `;
+            }
           }
         }
 
@@ -728,11 +783,37 @@
               `;
               divGifts.appendChild(item);
             });
+          } else {
+            divGifts.innerHTML = `
+              <div class="p-5 text-center text-xs text-slate-400 bg-slate-800/30 rounded-xl border border-slate-700/40">
+                <span>🎁 Belum ada saweran gift di sesi live ini.</span>
+              </div>
+            `;
           }
         }
 
       } catch (err) {
         console.warn('Gagal memuat update live:', err);
+      }
+    }
+
+    async function toggleSimDemo() {
+      try {
+        const res = await fetch('/api/v1/stream/simulation-toggle', {
+          method: 'POST',
+          headers: { 'X-User-Role': 'viewer' }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const isSim = data.is_simulation_enabled;
+          document.getElementById('simText').innerText = isSim ? 'Simulasi: ON' : 'Simulasi: OFF';
+          document.getElementById('btnSimDemo').className = isSim 
+            ? "flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-semibold transition"
+            : "flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs transition";
+          await refreshData();
+        }
+      } catch (e) {
+        console.warn('Gagal toggle simulasi:', e);
       }
     }
 

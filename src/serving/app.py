@@ -3,7 +3,8 @@ TikPulse - Serving Layer REST API & Continuous Stream Engine (F-10, F-12, F-16)
 Framework: FastAPI + PostgreSQL (dengan SQLite ACID Fallback) + Real-Time TikTokLive WebSocket Scraper
 Fitur:
   - Scraping Real-Time Langsung dari TikTok Live Room (via TikTokLiveClient Webcast WebSocket)
-  - Seamless Fallback ke Interactive Replayer / Presentation Simulation jika Akun Sedang Offline
+  - Penanganan Status Akun Offline yang Akurat & Transparan ("Toko Sedang Tidak Live")
+  - Opsi Simulasi Demo Terkontrol (hanya berjalan bila diaktifkan secara eksplisit)
   - Isolasi Penuh Data per Toko / Streamer (Session-Scoped Analytics)
   - Penyesuaian Otomatis Produk Sesuai Niche Toko (Sepatu, Baju, Hijab, Distro, Sport, Skincare, dll)
   - Live Comments Waterfall Stream (GET /api/v1/live/comments)
@@ -72,10 +73,13 @@ ml_model = processor.model
 active_streamer = "@tokobajumurah"
 active_session_id = f"sess_{int(time.time())}_tokobajumurah"
 is_streaming_active = True
-stream_mode = "SIMULATION_FALLBACK"  # "REALTIME_TIKTOK_LIVE" | "SIMULATION_FALLBACK"
+is_simulation_enabled = False       # Default False: Tidak membuat komentar palsu
+stream_mode = "OFFLINE"             # "REALTIME_TIKTOK_LIVE" | "OFFLINE" | "SIMULATION_FALLBACK"
 is_real_live_connected = False
 tiktok_client_instance = None
 recent_comments_buffer = []
+
+IS_POSTGRES_AVAILABLE = None
 
 class DatabaseContext:
     def __init__(self):
@@ -83,20 +87,47 @@ class DatabaseContext:
         self.db_type = "SQLITE"
 
     def __enter__(self):
-        try:
-            import psycopg2
-            from psycopg2.extras import RealDictCursor
-            self.conn = psycopg2.connect(
-                host=POSTGRES_HOST,
-                port=POSTGRES_PORT,
-                dbname=POSTGRES_DB,
-                user=POSTGRES_USER,
-                password=POSTGRES_PASS,
-                cursor_factory=RealDictCursor,
-                connect_timeout=2
-            )
-            self.db_type = "POSTGRES"
-        except Exception:
+        global IS_POSTGRES_AVAILABLE
+        if IS_POSTGRES_AVAILABLE is None:
+            try:
+                import psycopg2
+                from psycopg2.extras import RealDictCursor
+                self.conn = psycopg2.connect(
+                    host=POSTGRES_HOST,
+                    port=POSTGRES_PORT,
+                    dbname=POSTGRES_DB,
+                    user=POSTGRES_USER,
+                    password=POSTGRES_PASS,
+                    cursor_factory=RealDictCursor,
+                    connect_timeout=1
+                )
+                self.db_type = "POSTGRES"
+                IS_POSTGRES_AVAILABLE = True
+            except Exception:
+                IS_POSTGRES_AVAILABLE = False
+                self.conn = sqlite3.connect(SQLITE_DB_PATH)
+                self.conn.row_factory = sqlite3.Row
+                self.db_type = "SQLITE"
+        elif IS_POSTGRES_AVAILABLE:
+            try:
+                import psycopg2
+                from psycopg2.extras import RealDictCursor
+                self.conn = psycopg2.connect(
+                    host=POSTGRES_HOST,
+                    port=POSTGRES_PORT,
+                    dbname=POSTGRES_DB,
+                    user=POSTGRES_USER,
+                    password=POSTGRES_PASS,
+                    cursor_factory=RealDictCursor,
+                    connect_timeout=1
+                )
+                self.db_type = "POSTGRES"
+            except Exception:
+                IS_POSTGRES_AVAILABLE = False
+                self.conn = sqlite3.connect(SQLITE_DB_PATH)
+                self.conn.row_factory = sqlite3.Row
+                self.db_type = "SQLITE"
+        else:
             self.conn = sqlite3.connect(SQLITE_DB_PATH)
             self.conn.row_factory = sqlite3.Row
             self.db_type = "SQLITE"
@@ -127,9 +158,11 @@ def verify_access(
 
 SAMPLE_BUYERS = ["Anisa_Style", "Kevin_Sneaker", "Citra_Dewi", "Rian_Fashion", "Bambang_Keren", "Siti_Bandung", "Dedi_Distro", "Maya_Kurnia", "Fajar_Surabaya", "Jessica_99"]
 
+last_aggregate_time = 0
+
 def ingest_and_process_event(raw_event: dict):
     """Memproses raw event lewat pipeline Bronze -> Silver -> Gold dan update buffer."""
-    global recent_comments_buffer, active_streamer, active_session_id
+    global recent_comments_buffer, active_streamer, active_session_id, last_aggregate_time
     try:
         processed = processor.process_single_event(raw_event)
         if processed:
@@ -151,7 +184,10 @@ def ingest_and_process_event(raw_event: dict):
             else:
                 df_rec.to_parquet(parquet_path, engine="pyarrow", index=False)
 
-            aggregate_silver_to_gold()
+            now_t = time.time()
+            if now_t - last_aggregate_time > 1.2:
+                last_aggregate_time = now_t
+                aggregate_silver_to_gold()
             return processed
     except Exception as e:
         print(f"[INGEST ERROR] {e}")
@@ -245,19 +281,19 @@ async def try_connect_tiktok_live(username: str) -> bool:
         @client.on(DisconnectEvent)
         async def on_disconnect(event: DisconnectEvent):
             global is_real_live_connected, stream_mode
-            print(f"[TIKTOK LIVE] Terputus dari live @{clean_user}. Beralih ke fallback simulasi.")
+            print(f"[TIKTOK LIVE] Terputus dari live @{clean_user}. Status beralih ke OFFLINE.")
             is_real_live_connected = False
-            stream_mode = "SIMULATION_FALLBACK"
+            stream_mode = "OFFLINE"
 
         @client.on(LiveEndEvent)
         async def on_live_end(event: LiveEndEvent):
             global is_real_live_connected, stream_mode
             print(f"[TIKTOK LIVE] Siaran live @{clean_user} telah usai.")
             is_real_live_connected = False
-            stream_mode = "SIMULATION_FALLBACK"
+            stream_mode = "OFFLINE"
 
-        # Cek apakah akun sedang live dengan timeout 5.0 detik
-        is_live = await asyncio.wait_for(client.is_live(), timeout=5.0)
+        # Cek apakah akun sedang live dengan timeout 4.0 detik
+        is_live = await asyncio.wait_for(client.is_live(), timeout=4.0)
         if not is_live:
             print(f"[TIKTOK CHECK] Akun @{clean_user} saat ini tidak sedang siaran live.")
             return False
@@ -273,16 +309,16 @@ async def try_connect_tiktok_live(username: str) -> bool:
     except Exception as e:
         print(f"[TIKTOK LIVE ATTEMPT] Tidak dapat terhubung ke @{clean_user}: {e}")
         is_real_live_connected = False
-        stream_mode = "SIMULATION_FALLBACK"
+        stream_mode = "OFFLINE"
         return False
 
 async def continuous_stream_worker():
-    """Worker background yang memancarkan data simulasi/replayer interaktif jika akun sedang offline."""
-    global is_streaming_active, active_streamer, active_session_id, is_real_live_connected
+    """Worker background yang HANYA memancarkan data jika mode simulasi demo diaktifkan secara eksplisit."""
+    global is_streaming_active, active_streamer, active_session_id, is_real_live_connected, is_simulation_enabled
 
     while True:
-        # Hanya generate komentar simulasi jika TIDAK terhubung ke siaran TikTok Live asli
-        if is_streaming_active and not is_real_live_connected:
+        # HANYA generate komentar jika mode simulasi demo diaktifkan dan TIDAK live asli
+        if is_streaming_active and is_simulation_enabled and not is_real_live_connected:
             try:
                 now_iso = datetime.now(timezone.utc).isoformat()
                 evt_id = f"evt_{uuid.uuid4().hex[:10]}"
@@ -338,24 +374,7 @@ async def startup_event():
     except Exception as e:
         print(f"[STARTUP WARN] Inisialisasi Gold Tables: {e}")
 
-    # Inisialisasi event awal
-    now_iso = datetime.now(timezone.utc).isoformat()
-    comments_pool = get_store_comments(active_streamer)
-    for _ in range(4):
-        raw = {
-            "event_id": f"evt_{uuid.uuid4().hex[:10]}",
-            "session_id": active_session_id,
-            "streamer": active_streamer,
-            "event_type": "comment",
-            "event_time": now_iso,
-            "data": {
-                "user_id": f"u_{random.randint(1000, 9999)}",
-                "nickname": random.choice(SAMPLE_BUYERS),
-                "comment_text": random.choice(comments_pool)
-            }
-        }
-        ingest_and_process_event(raw)
-
+    # Default startup: sistem dalam kondisi bersih tanpa data palsu
     asyncio.create_task(continuous_stream_worker())
 
 @app.on_event("shutdown")
@@ -389,9 +408,9 @@ class SwitchSessionRequest(BaseModel):
 
 @app.post("/api/v1/session/switch", tags=["Session"])
 async def switch_session(req: SwitchSessionRequest, role: str = Header("viewer")):
-    """Beralih ke akun TikTok Live lain. Jika akun sedang live di TikTok, otomatis menyerap data komentar/saweran asli secara real-time. Jika offline, beralih ke simulasi replayer terisolasi."""
+    """Beralih ke akun TikTok Live lain. Jika akun sedang live, otomatis menyerap komentar asli secara real-time. Jika offline, sistem menampilkan status Toko Sedang Tidak Live tanpa data palsu."""
     global active_streamer, active_session_id, recent_comments_buffer
-    global tiktok_client_instance, is_real_live_connected, stream_mode
+    global tiktok_client_instance, is_real_live_connected, stream_mode, is_simulation_enabled
     verify_access(role, "viewer")
 
     clean_user = req.username.strip()
@@ -406,6 +425,7 @@ async def switch_session(req: SwitchSessionRequest, role: str = Header("viewer")
             pass
         tiktok_client_instance = None
     is_real_live_connected = False
+    is_simulation_enabled = False  # Reset simulasi saat ganti toko
 
     active_streamer = clean_user
     active_session_id = f"sess_{int(time.time())}_{clean_user.replace('@', '')}"
@@ -419,47 +439,11 @@ async def switch_session(req: SwitchSessionRequest, role: str = Header("viewer")
         stream_mode = "REALTIME_TIKTOK_LIVE"
         msg = f"🟢 Berhasil terhubung LANGSUNG ke siaran TikTok Live {active_streamer}! Komentar dan saweran mengalir 100% Real-Time dari penonton asli."
     else:
-        stream_mode = "SIMULATION_FALLBACK"
-        msg = f"🟡 Akun {active_streamer} sedang tidak Live di TikTok. Mode Fallback Simulasi diaktifkan agar dashboard dan demo ML tetap interaktif (Niche: {niche_name})."
-
-        # Buat 5 event pertama yang disesuaikan khusus untuk toko baru ini
-        now_iso = datetime.now(timezone.utc).isoformat()
-        comments_pool = get_store_comments(active_streamer)
-
-        for _ in range(5):
-            raw = {
-                "event_id": f"evt_{uuid.uuid4().hex[:10]}",
-                "session_id": active_session_id,
-                "streamer": active_streamer,
-                "event_type": "comment",
-                "event_time": now_iso,
-                "data": {
-                    "user_id": f"u_{random.randint(1000, 9999)}",
-                    "nickname": random.choice(SAMPLE_BUYERS),
-                    "comment_text": random.choice(comments_pool)
-                }
-            }
-            ingest_and_process_event(raw)
-
-        # 1 saweran gift pembuka
-        raw_gift = {
-            "event_id": f"evt_{uuid.uuid4().hex[:10]}",
-            "session_id": active_session_id,
-            "streamer": active_streamer,
-            "event_type": "gift",
-            "event_time": now_iso,
-            "data": {
-                "user_id": f"u_{random.randint(1000, 9999)}",
-                "nickname": random.choice(SAMPLE_BUYERS),
-                "gift_name": "Rose",
-                "diamond_count": 20,
-                "repeat_count": 1
-            }
-        }
-        ingest_and_process_event(raw_gift)
+        stream_mode = "OFFLINE"
+        msg = f"🔴 Toko {active_streamer} sedang tidak Live di TikTok. Menunggu siaran langsung dimulai."
 
     return {
-        "status": "SUCCESS",
+        "status": "SUCCESS" if connected_real else "OFFLINE",
         "streamer": active_streamer,
         "session_id": active_session_id,
         "stream_mode": stream_mode,
@@ -467,6 +451,22 @@ async def switch_session(req: SwitchSessionRequest, role: str = Header("viewer")
         "niche": niche_name,
         "new_events_processed": len(recent_comments_buffer),
         "message": msg
+    }
+
+@app.post("/api/v1/stream/simulation-toggle", tags=["Session"])
+def toggle_simulation(role: str = Header("viewer")):
+    """Mengaktifkan / Menonaktifkan simulasi demo interaktif (khusus keperluan presentasi saat toko offline)."""
+    global is_simulation_enabled, stream_mode
+    verify_access(role, "viewer")
+    is_simulation_enabled = not is_simulation_enabled
+    if is_simulation_enabled and not is_real_live_connected:
+        stream_mode = "SIMULATION_FALLBACK"
+    elif not is_real_live_connected:
+        stream_mode = "OFFLINE"
+    return {
+        "is_simulation_enabled": is_simulation_enabled,
+        "stream_mode": stream_mode,
+        "status": "SIMULATION_ENABLED" if is_simulation_enabled else "SIMULATION_DISABLED"
     }
 
 @app.post("/api/v1/stream/toggle", tags=["Session"])
@@ -490,6 +490,7 @@ def get_live_comments(role: str = Header("viewer")):
         "stream_mode": stream_mode,
         "is_real_live": is_real_live_connected,
         "is_streaming": is_streaming_active,
+        "is_simulation_enabled": is_simulation_enabled,
         "total_buffered": len(recent_comments_buffer),
         "comments": recent_comments_buffer[:20]
     }
@@ -503,6 +504,7 @@ def health_check():
         "session_id": active_session_id,
         "stream_mode": stream_mode,
         "is_real_live": is_real_live_connected,
+        "is_simulation_enabled": is_simulation_enabled,
         "is_streaming_active": is_streaming_active,
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
@@ -519,13 +521,14 @@ def get_live_summary(role: str = Header("viewer")):
             )
             row = cur.fetchone()
 
-            if not row:
+            if not row or len(recent_comments_buffer) == 0:
                 return {
                     "data": {
                         "session_id": active_session_id,
                         "streamer": active_streamer,
                         "stream_mode": stream_mode,
                         "is_real_live": is_real_live_connected,
+                        "is_simulation_enabled": is_simulation_enabled,
                         "niche": detect_store_niche(active_streamer),
                         "total_comments": len([c for c in recent_comments_buffer if c.get("event_type") == "comment"]),
                         "total_gift_revenue_idr": sum(c.get("gift_value_idr", 0) for c in recent_comments_buffer if c.get("event_type") == "gift"),
@@ -535,18 +538,21 @@ def get_live_summary(role: str = Header("viewer")):
                     },
                     "stream_mode": stream_mode,
                     "is_real_live": is_real_live_connected,
-                    "message": "Menunggu aliran siaran langsung."
+                    "is_simulation_enabled": is_simulation_enabled,
+                    "message": "Toko sedang tidak live." if not is_real_live_connected else "Siaran live aktif."
                 }
             res_dict = dict(row)
             res_dict["niche"] = detect_store_niche(active_streamer)
             res_dict["stream_mode"] = stream_mode
             res_dict["is_real_live"] = is_real_live_connected
+            res_dict["is_simulation_enabled"] = is_simulation_enabled
             return {
                 "data": res_dict,
                 "stream_mode": stream_mode,
                 "is_real_live": is_real_live_connected,
+                "is_simulation_enabled": is_simulation_enabled,
                 "is_streaming": is_streaming_active,
-                "freshness": "REAL_TIME",
+                "freshness": "REAL_TIME" if is_real_live_connected else "STANDBY",
                 "retrieved_at": datetime.now(timezone.utc).isoformat()
             }
     except Exception as e:
@@ -570,7 +576,7 @@ def get_product_demand(
             """, (active_session_id, limit))
             rows = [dict(r) for r in cur.fetchall()]
 
-            # Fallback 1: Hitung dari recent_comments_buffer jika mart belum terisi
+            # Fallback 1: Hitung dari recent_comments_buffer jika ada event yang masuk
             if not rows and recent_comments_buffer:
                 counts = {}
                 for c in recent_comments_buffer:
@@ -585,7 +591,7 @@ def get_product_demand(
                             counts[et]["high_intent_count"] += 1
                 rows = sorted(counts.values(), key=lambda x: x["request_count"], reverse=True)[:limit]
 
-            # Fallback 2: Ambil produk teratas dari katalog toko aktif agar chart langsung terisi
+            # Fallback 2: Jika belum ada permintaan live, tampilkan katalog toko aktif dengan 0 permintaan (Jujur & Akurat)
             if not rows:
                 cat_df = get_store_catalog(active_streamer)
                 for _, r in cat_df.head(limit).iterrows():
@@ -593,9 +599,9 @@ def get_product_demand(
                         "etalase_no": int(r["etalase_no"]),
                         "product_name": str(r["product_name"]),
                         "price_idr": int(r["price_idr"]),
-                        "request_count": 1,
-                        "high_intent_count": 1,
-                        "last_requested_at": datetime.now(timezone.utc).isoformat()
+                        "request_count": 0,
+                        "high_intent_count": 0,
+                        "last_requested_at": None
                     })
 
             return {
@@ -626,8 +632,8 @@ def get_top_gifters(limit: int = Query(5, ge=1, le=20), role: str = Header("view
             """, (active_session_id, limit))
             rows = [dict(r) for r in cur.fetchall()]
 
-            # Fallback jika belum masuk mart
-            if not rows:
+            # Fallback jika belum masuk mart tapi ada di buffer
+            if not rows and recent_comments_buffer:
                 gift_map = {}
                 for c in recent_comments_buffer:
                     if c.get("event_type") == "gift":
@@ -639,14 +645,9 @@ def get_top_gifters(limit: int = Query(5, ge=1, le=20), role: str = Header("view
                         gift_map[nick]["gift_count"] += 1
                 rows = sorted(gift_map.values(), key=lambda x: x["total_gift_idr"], reverse=True)[:limit]
 
+            # Jika offline dan belum ada saweran asli, jangan tampilkan data palsu
             if not rows:
-                clean_nick = active_streamer.replace("@", "")[:8]
-                rows = [{
-                    "nickname": f"Sultan_{clean_nick}",
-                    "total_gift_idr": 25000,
-                    "gift_count": 1,
-                    "last_gift_at": datetime.now(timezone.utc).isoformat()
-                }]
+                rows = []
 
             return {
                 "streamer": active_streamer,
