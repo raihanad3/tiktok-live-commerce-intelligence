@@ -37,3 +37,34 @@ def test_ml_inference_input_validation():
     )
     # Jika gagal validasi pydantic atau business logic
     assert response.status_code in [400, 422]
+
+def test_get_catalog_endpoint():
+    """Menguji endpoint pengambilan katalog toko."""
+    response = client.get("/api/v1/catalog?streamer=@aerostreet", headers={"role": "viewer"})
+    assert response.status_code == 200
+    data = response.json()
+    assert "products" in data
+    assert len(data["products"]) > 0
+    assert any("Aerostreet" in p["product_name"] for p in data["products"])
+
+def test_update_catalog_endpoint():
+    """Menguji endpoint pembaruan katalog toko custom."""
+    test_products = [
+        {"etalase_no": 1, "product_name": "Sepatu Test Edition 1", "price_idr": 150000},
+        {"etalase_no": 2, "product_name": "Kaos Test Edition 2", "price_idr": 75000}
+    ]
+    response = client.post(
+        "/api/v1/catalog/update",
+        json={"streamer": "@teststore", "products": test_products},
+        headers={"role": "viewer"}
+    )
+    assert response.status_code == 200
+    assert response.json()["status"] == "success"
+
+    # Verifikasi langsung lewat GET
+    get_res = client.get("/api/v1/catalog?streamer=@teststore", headers={"role": "viewer"})
+    assert get_res.status_code == 200
+    prods = get_res.json()["products"]
+    assert len(prods) == 2
+    assert prods[0]["product_name"] == "Sepatu Test Edition 1"
+

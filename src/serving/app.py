@@ -38,7 +38,7 @@ except ImportError:
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from pipeline.bronze_to_silver import BronzeToSilverProcessor, SILVER_OUTPUT_DIR
 from pipeline.silver_to_gold import aggregate_silver_to_gold, init_gold_tables
-from common.store_catalog import get_store_catalog, get_store_comments, detect_store_niche
+from common.store_catalog import get_store_catalog, get_store_comments, detect_store_niche, save_custom_store_catalog
 
 app = FastAPI(
     title="TikPulse Live Commerce Serving API",
@@ -693,3 +693,68 @@ def predict_comment_intent(req: PredictionRequest, role: str = Header("viewer"))
         model_version="v1.0-tfidf-logreg",
         predicted_at=now_iso
     )
+
+class CatalogProductItem(BaseModel):
+    etalase_no: int
+    product_name: str
+    price_idr: int
+    sku: Optional[str] = None
+    category: Optional[str] = None
+    stock: Optional[int] = 50
+
+class UpdateCatalogRequest(BaseModel):
+    streamer: Optional[str] = None
+    products: List[CatalogProductItem]
+
+@app.get("/api/v1/catalog", tags=["Store Catalog"])
+def get_catalog_endpoint(streamer: Optional[str] = Query(None), role: str = Header("viewer")):
+    """Mengambil katalog produk resmi atau kustom toko aktif."""
+    verify_access(role, "viewer")
+    target_streamer = streamer or active_streamer
+    df = get_store_catalog(target_streamer)
+    products = df.to_dict(orient="records") if not df.empty else []
+    return {
+        "streamer": target_streamer,
+        "niche": detect_store_niche(target_streamer),
+        "total_products": len(products),
+        "products": products
+    }
+
+@app.post("/api/v1/catalog/update", tags=["Store Catalog"])
+def update_catalog_endpoint(req: UpdateCatalogRequest, role: str = Header("viewer")):
+    """Menyimpan pembaruan katalog produk toko dan memperbarui mart produk secara instan."""
+    verify_access(role, "viewer")
+    target_streamer = req.streamer or active_streamer
+    items = [p.model_dump() if hasattr(p, "model_dump") else p.dict() for p in req.products]
+    save_custom_store_catalog(target_streamer, items)
+
+    # Sinkronisasi ke mart_product_demand di database
+    try:
+        with DatabaseContext() as db:
+            for p in req.products:
+                db.execute_query("""
+                    UPDATE mart_product_demand
+                    SET product_name = %s, price_idr = %s
+                    WHERE session_id = %s AND etalase_no = %s;
+                """, (p.product_name, p.price_idr, active_session_id, p.etalase_no))
+            if hasattr(db.conn, "commit"):
+                db.conn.commit()
+    except Exception as e:
+        print(f"[CATALOG SYNC ERROR] {e}")
+
+    # Sinkronisasi buffer komentar langsung di memori
+    for c in recent_comments_buffer:
+        et = c.get("extracted_etalase")
+        if et:
+            for p in req.products:
+                if p.etalase_no == et:
+                    c["matched_product_name"] = p.product_name
+                    c["matched_price_idr"] = p.price_idr
+
+    return {
+        "status": "success",
+        "message": f"Katalog untuk {target_streamer} berhasil diperbarui ({len(items)} produk).",
+        "streamer": target_streamer,
+        "total_updated": len(items)
+    }
+

@@ -1,10 +1,80 @@
 """
 TikPulse - Store Catalog & Niche Detection Engine
-Menyediakan katalog dinamis dan komentar live stream yang 100% selaras dengan nama toko.
+Menyediakan katalog dinamis, katalog resmi brand (Aerostreet, Somethinc, Raysportindo, Erigo),
+serta persistensi penyesuaian katalog per toko oleh pengguna.
 """
 
+import os
 import re
+import json
 import pandas as pd
+
+CUSTOM_CATALOGS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data", "catalogs"))
+os.makedirs(CUSTOM_CATALOGS_DIR, exist_ok=True)
+
+BRAND_CATALOGS = {
+    "aerostreet": {
+        "category": "Aerostreet Official Footwear",
+        "products": [
+            (1, "AERO-HPS-001", "Aerostreet Hoops Low White Black Sneakers", 149000, 50, "hoops,sneakers,sepatu,hitam,putih"),
+            (2, "AERO-MSS-002", "Aerostreet Massive Low All White Gum Sole", 139000, 45, "massive,all white,gum,kanvas"),
+            (3, "AERO-OSK-003", "Aerostreet Osaka Low Retro Vintage Series", 129000, 60, "osaka,vintage,retro,sepatu"),
+            (4, "AERO-TKY-004", "Aerostreet 2D Tokyo White Grey Limited", 149000, 40, "2d,tokyo,white grey,sneaker"),
+            (5, "AERO-SLD-005", "Aerostreet Sandal Slide Cloud Foam Black", 59000, 120, "sandal,slide,cloud foam,empuk"),
+            (6, "AERO-TSH-006", "Aerostreet T-Shirt Graphic Kaos Distro Katun 24s", 69000, 100, "kaos,tshirt,baju,distro,katun"),
+            (7, "AERO-RUN-007", "Aerostreet Running Falcon Breathable Mesh", 169000, 35, "running,falcon,lari,olahraga"),
+            (8, "AERO-SLP-008", "Aerostreet Slip On Comfy Canvas Black White", 119000, 55, "slip on,slipon,kanvas,praktis"),
+            (9, "AERO-SOX-009", "Aerostreet Kaos Kaki Ankle 3 Pasang Premium", 25000, 150, "kaos kaki,socks,ankle"),
+            (10, "AERO-CLN-010", "Aerostreet Cleaner Kit Foam Pembersih Sepatu", 45000, 80, "cleaner,pembersih,kit,foam")
+        ]
+    },
+    "somethinc": {
+        "category": "Somethinc Beauty & Skincare",
+        "products": [
+            (1, "SMT-CALM-001", "Somethinc Calm Down! Skinpair Barrier Moisturizer", 119000, 80, "calm down,moisturizer,pelembab,skin barrier"),
+            (2, "SMT-CRMC-002", "Somethinc Ceramic Skin Saviour Moisturizer Gel", 139000, 75, "ceramic,skin saviour,moisturizer,gel"),
+            (3, "SMT-SABI-003", "Somethinc 5% Niacinamide + Sabi Beet Brightening Serum", 115000, 90, "serum,niacinamide,sabi beet,mencerahkan"),
+            (4, "SMT-SUN-004", "Somethinc Holyshield! UV Watery Sunscreen Gel SPF 50+", 99000, 110, "sunscreen,holyshield,tabir surya,spf 50"),
+            (5, "SMT-CPY-005", "Somethinc Copy Paste Breathable Mesh Cushion SPF 35", 169000, 60, "copy paste,cushion,mesh,foundation"),
+            (6, "SMT-MAT-006", "Somethinc Checkmatte Transferproof Lipstick Matte", 89000, 130, "checkmatte,lipstick,lip tint,matte"),
+            (7, "SMT-DIAM-007", "Somethinc Diamond Phyto Stem Cell Serum 20ml", 149000, 45, "diamond,stem cell,serum,anti aging"),
+            (8, "SMT-EYE-008", "Somethinc Game Changer Tripeptide Eye Concentrate", 79000, 70, "game changer,eye cream,mata panda"),
+            (9, "SMT-CLN-009", "Somethinc Low pH Gentle & Mild Facial Cleanser", 75000, 95, "facial wash,cleanser,sabun cuci muka"),
+            (10, "SMT-AHA-010", "Somethinc AHA BHA PHA Peeling Solution 20ml", 98000, 65, "peeling,aha bha,eksfoliasi,toner"),
+            (25, "SMT-CVR-025", "Somethinc Coverblurr Breathable Cushion Refill", 129000, 50, "coverblurr,cushion refill,refil,cushion")
+        ]
+    },
+    "ray": {
+        "category": "Raysportindo Badminton Specialist",
+        "products": [
+            (1, "RAY-ARC-001", "Yonex Arcsaber 11 Pro Carbon 4U Badminton Racket", 520000, 25, "arcsaber,yonex,raket,badminton,carbon"),
+            (2, "RAY-HLB-002", "Lining Halbertec 8000 Professional Series Racket", 480000, 20, "lining,halbertec,raket,smash"),
+            (3, "RAY-SHL-003", "Shuttlecock JP Gold Tournament Grade 1 Slop Isi 12", 125000, 90, "shuttlecock,jp gold,kok,bulutangkis"),
+            (4, "RAY-SPU-004", "Sepatu Badminton Yonex Power Cushion Non-Marking", 450000, 30, "sepatu,yonex,power cushion,grip"),
+            (5, "RAY-JRS-005", "Jersey Badminton Victor Dryfit Breathable Tournament", 95000, 85, "jersey,baju badminton,victor,dryfit"),
+            (6, "RAY-TAS-006", "Tas Raket Badminton Thermo Double Compartment", 230000, 25, "tas raket,thermo,badminton bag"),
+            (7, "RAY-SNR-007", "Senar Badminton Yonex BG 66 Ultimax Original", 105000, 70, "senar,bg66,ultimax,tarikan"),
+            (8, "RAY-GRP-008", "Grip Karet Raket Yonex AC102EX Tacky Feel Isi 3", 35000, 160, "grip,karet,yonex,ac102"),
+            (9, "RAY-KNE-009", "Knee Pad Support Deker Lutut Olahraga Badminton", 55000, 60, "knee pad,deker,lutut,pelindung"),
+            (10, "RAY-SOX-010", "Kaos Kaki Badminton Tebal Cushioned Anti Slip", 35000, 110, "kaos kaki,cushion,anti slip")
+        ]
+    },
+    "erigo": {
+        "category": "Erigo Official Streetwear",
+        "products": [
+            (1, "ERG-TSH-001", "Erigo T-Shirt Basic Cotton Combed Oversized", 75000, 120, "kaos,tshirt,basic,erigo,katun"),
+            (2, "ERG-COA-002", "Erigo Coach Jacket Windproof Iconic Graphic", 169000, 45, "coach jacket,jaket coach,erigo,windproof"),
+            (3, "ERG-CHN-003", "Erigo Chino Pants Slim Fit Stretch Cotton", 145000, 50, "chino,celana panjang,chino pants"),
+            (4, "ERG-HOD-004", "Erigo Pullover Hoodie Fleece Heavyweight", 185000, 40, "hoodie,fleece,sweater,jaket"),
+            (5, "ERG-CRG-005", "Erigo Cargo Pants Tactical 6 Pockets", 165000, 35, "cargo,celana cargo,tactical"),
+            (6, "ERG-SHT-006", "Erigo Short Pants Chino Casual Santai", 89000, 70, "celana pendek,short pants,santai"),
+            (7, "ERG-FLN-007", "Erigo Kemeja Flanel Tartan Long Sleeve", 135000, 55, "flanel,kemeja,tartan,kotak kotak"),
+            (8, "ERG-HAT-008", "Erigo Baseball Cap Embroidery Logo", 55000, 80, "topi,baseball cap,snapback"),
+            (9, "ERG-BAG-009", "Erigo Waist Bag Crossbody Cordura Water Resistant", 95000, 60, "waist bag,tas selempang,cordura"),
+            (10, "ERG-SKJ-010", "Erigo Sukajan Reversible Embroidered Jacket", 275000, 20, "sukajan,jaket sukajan,reversible")
+        ]
+    }
+}
 
 STORE_NICHES = {
     "sports": {
@@ -27,27 +97,17 @@ STORE_NICHES = {
             "Sepatu bulutangkis no 2 ready size 42 warna putih hitam gak min?",
             "Shuttlecock no 3 dapet 1 slop isi 12 kan kak mau beli 2 slop sekarang",
             "Jersey badminton no 4 bahannya adem dan nyerap keringat gak kak?",
-            "Spill grip raket no 5 kak mau co bareng raket no 1",
-            "Bisa COD raket no 1 ke Surabaya min?",
-            "Udah checkout raket no 1 ya min tolong di-packing kayu yang aman!",
-            "Tas raket no 6 muat berapa raket kak tolong spill ruang dalamnya",
-            "Senar no 7 bisa langsung dipasangin di raket gak min?",
-            "Sepatu no 2 sol bawahnya empuk gak kak buat lompat smash?",
-            "Keren banget barangnya min salam dari anak bulutangkis!",
-            "Udah checkout jersey no 4 ukuran L ya tolong diproses min",
-            "Kaos kaki no 9 bahannya tebel gak min?",
-            "Kok no 3 lajunya stabil gak kak buat latihan tanding?",
-            "Packing raket no 1 aman sampai Papua gak min mau beli sekarang"
+            "Spill grip raket no 5 kak mau co bareng raket no 1"
         ]
     },
     "shoes": {
         "keywords": ["sepatu", "shoe", "sneaker", "foot", "aerostreet", "ventela", "compass"],
         "category": "Footwear & Sepatu",
         "products": [
-            (1, "SH-SNK-001", "Sepatu Sneakers Retro Vulcanized White Gum", 149000, 50, "sneakers,sepatu,vulcanized,putih,retro"),
-            (2, "SH-RUN-002", "Sepatu Running Ultra Light Mesh Breathable", 169000, 40, "running,lari,mesh,ringan,olahraga"),
-            (3, "SH-SLP-003", "Sepatu Slip On Kasual Kanvas Classic", 119000, 60, "slip on,kasual,kanvas,tanpa tali"),
-            (4, "SH-SND-004", "Sandal Slide Foam Empuk Anti Licin", 69000, 100, "sandal,slide,eva foam,empuk"),
+            (1, "SH-SNK-001", "Aerostreet Hoops Low White Black Sneakers", 149000, 50, "hoops,sneakers,sepatu,hitam,putih"),
+            (2, "SH-RUN-002", "Aerostreet Massive Low All White Gum Sole", 139000, 40, "massive,all white,gum,kanvas"),
+            (3, "SH-SLP-003", "Aerostreet Osaka Low Retro Vintage Series", 129000, 60, "osaka,vintage,retro,sepatu"),
+            (4, "SH-SND-004", "Aerostreet Sandal Slide Cloud Foam Black", 59000, 100, "sandal,slide,eva foam,empuk"),
             (5, "SH-INS-005", "Insole Memory Foam Antibakteri Ortopedi", 35000, 120, "insole,alas sepatu,memory foam"),
             (6, "SH-CLN-006", "Shoe Cleaner Foam Pembersih Sepatu Instan", 49000, 80, "cleaner,pembersih sepatu,foam"),
             (7, "SH-LCE-007", "Tali Sepatu Katun Pipih Premium 120cm", 15000, 200, "tali sepatu,shoelaces,katun"),
@@ -60,152 +120,123 @@ STORE_NICHES = {
             "Sepatu no 1 warna putih gum ready size 42 gak min?",
             "Sepatu running no 2 bahannya enteng gak kak mau beli buat jogging",
             "Slip on no 3 muat untuk kaki lebar gak min mau co",
-            "Sandal slide no 4 bahan eva foam nya empuk gak kak?",
-            "Spill etalase 1 min mau lihat jahitan sol sampingnya",
-            "Pembersih sepatu no 6 aman buat bahan suede gak min?",
-            "Udah checkout sneakers no 1 ya min tolong segera dikirim!",
-            "Tali sepatu no 7 panjang berapa cm kak?",
-            "Bisa COD sepatu no 2 ke Bandung min?"
+            "Sandal slide no 4 bahan eva foam nya empuk gak kak?"
         ]
     },
     "skincare": {
         "keywords": ["skin", "beauty", "glow", "cosmetic", "makeup", "serum", "somethinc", "skintific", "originote", "scarlett", "wardah"],
         "category": "Skincare & Beauty",
         "products": [
-            (1, "SK-SRM-001", "Serum Niacinamide 10% Brightening Glow", 115000, 90, "serum,niacinamide,brightening,mencerahkan"),
-            (2, "SK-SUN-002", "Sunscreen Gel SPF 50+ PA++++ No Whitecast", 89000, 120, "sunscreen,tabir surya,spf50,gel"),
-            (3, "SK-MST-003", "Moisturizer 5X Ceramide Barrier Repair", 129000, 75, "moisturizer,ceramide,skin barrier,pelembab"),
-            (4, "SK-CLN-004", "Gentle Facial Wash Cleanser Low pH", 65000, 110, "facial wash,cleanser,sabun cuci muka"),
-            (5, "SK-CSH-005", "Cushion Foundation Flawless Matte SPF 35", 145000, 50, "cushion,foundation,matte,bedak"),
-            (6, "SK-LIP-006", "Velvet Matte Lip Tint Longlasting Transferproof", 49000, 150, "lip tint,liptint,velvet,matte,bibir"),
+            (1, "SK-SRM-001", "Somethinc Calm Down! Skinpair Barrier Moisturizer", 119000, 90, "calm down,pelembab,skin barrier"),
+            (2, "SK-SUN-002", "Somethinc Ceramic Skin Saviour Moisturizer Gel", 139000, 120, "ceramic,skin saviour,gel"),
+            (3, "SK-MST-003", "Somethinc 5% Niacinamide + Sabi Beet Serum", 115000, 75, "serum,niacinamide,sabi beet"),
+            (4, "SK-CLN-004", "Somethinc Holyshield! UV Watery Sunscreen Gel SPF 50+", 99000, 110, "sunscreen,holyshield,tabir surya"),
+            (5, "SK-CSH-005", "Somethinc Copy Paste Breathable Mesh Cushion SPF 35", 169000, 50, "copy paste,cushion,foundation"),
+            (6, "SK-LIP-006", "Somethinc Checkmatte Transferproof Lipstick Matte", 89000, 150, "checkmatte,lipstick,matte"),
             (7, "SK-TNR-007", "Exfoliating AHA BHA PHA Peeling Toner", 98000, 60, "toner,exfoliating,aha bha,peeling"),
             (8, "SK-RET-008", "Retinol Rejuvenating Night Cream 20g", 135000, 40, "retinol,night cream,anti aging"),
             (9, "SK-MSK-009", "Sheet Mask Hydrating Hyaluronic Isi 5 Pcs", 40000, 100, "sheet mask,masker wajah,hydrating"),
-            (10, "SK-EYE-010", "Eye Cream Peptide Dark Circle Remover", 75000, 70, "eye cream,krim mata,mata panda")
+            (10, "SK-EYE-010", "Eye Cream Peptide Dark Circle Remover", 75000, 70, "eye cream,krim mata,mata panda"),
+            (25, "SK-CVR-025", "Somethinc Coverblurr Breathable Cushion Refill", 129000, 50, "coverblurr,cushion refill,refil")
         ],
         "comments": [
             "Kak tolong spill serum brightening no 1 dong mau checkout!",
             "Sunscreen no 2 ninggalin whitecast gak min di kulit sawo matang?",
             "Moisturizer no 3 aman buat kulit berjerawat dan fungal acne?",
             "Udah co cushion no 5 shade sand ya min tolong cepat dikirim!",
-            "Lip tint no 6 transferproof gak kak tahan berapa jam?",
-            "Spill etalase 1 min mau lihat tekstur cairannya",
-            "Paket etalase 1 dan 2 ada diskon bundling gak min?",
-            "Facial wash no 4 busanya lembut gak kak bikin ketarik ga?",
-            "Toner no 7 bisa dipake tiap hari gak min?",
-            "Udah checkout serum no 1 dan sunscreen no 2 ya min!"
+            "Lip tint no 6 transferproof gak kak tahan berapa jam?"
         ]
     },
     "hijab": {
         "keywords": ["hijab", "gamis", "butik", "dress", "muslim", "khimar", "abaya", "rabbani", "zoya", "wanita", "modest"],
-        "category": "Fashion Muslimah",
+        "category": "Fashion Muslimah & Hijab",
         "products": [
-            (1, "HB-PSH-001", "Pashmina Silk Premium Shiny Soft Flowy", 59000, 120, "pashmina,silk,hijab,kerudung,shiny"),
-            (2, "HB-VOL-002", "Hijab Segiempat Voal Watersplash Anti Air", 45000, 150, "voal,segiempat,kerudung,watersplash"),
-            (3, "HB-ABY-003", "Gamis Abaya Silk Turkey Elegan Busui Friendly", 225000, 35, "gamis,abaya,silk,turkey,dress muslim"),
-            (4, "HB-KLT-004", "Celana Kulot Linen Highwaist Loose Fit", 65000, 80, "kulot,linen,celana wanita,highwaist"),
-            (5, "HB-DRS-005", "Midi Dress Floral Vintage Korean Style", 110000, 45, "dress,midi dress,floral,vintage,korean"),
-            (6, "HB-MKN-006", "Mukena Parasut Traveling Mini Pouch Ringan", 89000, 70, "mukena,traveling,parasut,mini pouch"),
-            (7, "HB-CPT-007", "Inner Ciput Bandana Rajut Anti Pusing 4 Pcs", 18000, 200, "ciput,inner hijab,bandana rajut"),
-            (8, "HB-TNK-008", "Tunik Rayon Twill Premium Adem Busui", 95000, 60, "tunik,rayon twill,atasan wanita"),
-            (9, "HB-PLK-009", "Rok Plisket Premium Tebal Payung Flare", 55000, 90, "rok plisket,rok payung,bawahan"),
-            (10, "HB-BRS-010", "Bros Dagu Mutiara Hijab Pin Tuspin Mewah", 15000, 250, "bros,tuspin,pin hijab,mutiara")
+            (1, "HJB-PAS-001", "Pashmina Silk Premium Shiny Flowy 180x75", 49000, 150, "pashmina,silk,hijab,flowy,mengkilap"),
+            (2, "HJB-GMS-002", "Gamis Abaya Crinkle Airflow Busui Friendly", 135000, 45, "gamis,abaya,crinkle,busui,dress"),
+            (3, "HJB-VOL-003", "Jilbab Segiempat Voal Paris Premium Laser Cut", 35000, 200, "voal,paris,segiempat,jilbab,kerudung"),
+            (4, "HJB-BRG-004", "Bergo Instan Maryam Jersey Non Pet Menutup Dada", 29000, 180, "bergo,maryam,instan,jersey"),
+            (5, "HJB-CPT-005", "Ciput Ninja Anti Pusing Rayon Premium", 15000, 300, "ciput,ninja,inner,dalaman jilbab"),
+            (6, "HJB-TNK-006", "Tunik Polos Katun Rayon Adem Nyaman", 89000, 60, "tunik,atasan wanita,rayon"),
+            (7, "HJB-KHM-007", "Khimar Syari Ceruty Babydoll 2 Layer", 75000, 70, "khimar,syari,ceruty,babydoll"),
+            (8, "HJB-BSR-008", "Bros Dagu Mutiara Hijab Elegan Isi 6", 12000, 250, "bros,mutiara,pin jilbab"),
+            (9, "HJB-HNS-009", "Handsock Manset Tangan Cincin Rajut", 18000, 150, "manset,handsock,jempol,cincin"),
+            (10, "HJB-MUK-010", "Mukena Parasut Korea Mini Travel Friendly", 95000, 80, "mukena,travel,mini,parasut")
         ],
         "comments": [
-            "Kak spill pashmina silk no 1 warna champagne dong mau checkout!",
-            "Voal no 2 beneran anti air gak min kalo kena cipratan?",
-            "Gamis abaya no 3 muat sampai BB 75 kg gak kak?",
-            "Kulot no 4 warna cream nerawang gak min bahannya?",
-            "Spill dress vintage no 5 kak mau lihat motif bunganya",
-            "Mukena traveling no 6 ukurannya pas dilipat sekecil apa min?",
-            "Udah checkout gamis abaya no 3 ya tolong dikirim hari ini!",
-            "Pashmina no 1 gampang dibentuk gak kak licin ga?",
-            "Bisa COD ke Bandung gak kak?",
-            "Suka banget sama motif dress no 5 kak semangaat!"
+            "Pashmina silk no 1 gampang dibentuk gak kak licin ga?",
+            "Gamis no 2 muat untuk LD 110 gak min mau checkout!",
+            "Segiempat voal no 3 tegak di dahi gak kak?",
+            "Spill bergo maryam nomor 4 dong kak",
+            "Udah co pashmina no 1 warna mocca ya min!"
         ]
     },
-    "gadget": {
-        "keywords": ["gadget", "phone", "hp", "case", "elektronik", "ibox", "anker", "apple", "xiaomi", "samsung", "tech"],
-        "category": "Gadget & Aksesoris",
+    "gadgets": {
+        "keywords": ["gadget", "phone", "case", "charger", "tws", "earphone", "audio", "kabel", "powerbank", "tech"],
+        "category": "Gadget & Aksesoris Elektronik",
         "products": [
-            (1, "GD-CAS-001", "Casing Magnetic Shockproof Hybrid Case", 45000, 150, "casing,case hp,magnetic,shockproof"),
-            (2, "GD-KBL-002", "Kabel Fast Charging 65W Braided Type-C", 39000, 200, "kabel data,fast charging,type c,65w"),
-            (3, "GD-PWR-003", "Powerbank 20000mAh Dual Port PD 22.5W", 189000, 50, "powerbank,20000mah,fast charging,pd"),
-            (4, "GD-TWS-004", "TWS Bluetooth 5.3 Earphone Bass Noise Reduction", 129000, 80, "tws,earphone,bluetooth,headset"),
-            (5, "GD-TMP-005", "Tempered Glass Full Cover Anti Spy Privacy", 25000, 250, "tempered glass,anti gores,anti spy"),
-            (6, "GD-HLD-006", "Stand Holder HP Meja Lipat Aluminium", 35000, 100, "holder hp,stand meja,aluminium"),
-            (7, "GD-CHG-007", "Kepala Charger GaN 33W Fast Charging Dual Port", 79000, 90, "charger,kepala charger,gan,33w"),
-            (8, "GD-WAT-008", "Smartwatch Fitness Tracker IP68 Waterproof", 249000, 30, "smartwatch,jam tangan pintar,fitness"),
-            (9, "GD-RNG-009", "Ring Light Tripod 26cm Live TikTok Streaming", 85000, 45, "ring light,tripod,live streaming"),
-            (10, "GD-OTG-010", "Adapter OTG USB 3.0 to Type-C Metal Compact", 19000, 300, "otg,adapter,type c,usb")
+            (1, "GDG-CHG-001", "Fast Charger 65W GaN Dual Port Type C", 139000, 80, "charger,fast charging,gan,type c"),
+            (2, "GDG-TWS-002", "TWS Bluetooth 5.3 ANC Low Latency Bass", 159000, 60, "tws,earphone,bluetooth,anc,headset"),
+            (3, "GDG-KBL-003", "Kabel Data Type C to C 100W Braided 1M", 35000, 200, "kabel data,type c,100w,braided"),
+            (4, "GDG-CSE-004", "Case Magnetic Wireless MagSafe Shockproof", 45000, 150, "case,casing,magsafe,shockproof"),
+            (5, "GDG-PWR-005", "Powerbank 20.000 mAh 22.5W Fast Charging LED", 199000, 40, "powerbank,20000mah,fast charging"),
+            (6, "GDG-TG-006", "Tempered Glass Privacy Anti Spy Full Cover", 25000, 250, "tempered glass,anti spy,privacy"),
+            (7, "GDG-HLD-007", "Holder HP Meja Lipat Aluminium Portable", 39000, 100, "holder,stand hp,dudukan meja"),
+            (8, "GDG-AUD-008", "Headset Gaming Stereo Bass with Mic 3.5mm", 79000, 70, "headset,gaming,earphone kabel"),
+            (9, "GDG-STR-009", "Strap Gantungan HP Lanyard Braided Lucu", 15000, 300, "strap,lanyard,gantungan hp"),
+            (10, "GDG-OTG-010", "Adapter USB OTG USB 3.0 to Type C Metal", 19000, 180, "otg,adapter,usb,type c")
         ],
         "comments": [
-            "Kak tolong spill casing shockproof no 1 untuk tipe hp ku dong!",
-            "Kabel data no 2 support fast charging 65W gak min mau checkout!",
-            "Powerbank no 3 boleh dibawa masuk pesawat terbang gak kak?",
-            "TWS no 4 suaranya ngebass gak min delay ga buat main game?",
-            "Spill tempered glass no 5 kak gampang pasang sendiri gak?",
-            "Udah co powerbank no 3 ya tolong packing bubble wrap tebel!",
-            "Smartwatch no 8 notifikasi WA bisa masuk gak kak?",
-            "Bisa COD ke Semarang min?",
-            "Charger no 7 cepet panas gak min pas ngecas?",
-            "Spill holder hp no 6 min kokoh gak buat tablet?"
+            "Charger no 1 bisa buat iPhone dan laptop gak min?",
+            "TWS no 2 bass nya nendang gak kak buat main game ada delay ga?",
+            "Powerbank no 5 aman dibawa masuk kabin pesawat gak min?",
+            "Spill case magnetic no 4 buat tipe hp apa aja?",
+            "Udah co kabel data no 3 warna hitam ya min!"
         ]
     },
-    "kuliner": {
-        "keywords": ["makan", "kuliner", "kopi", "coffee", "snack", "pedas", "sambal", "kue", "food", "cake", "boci", "seblak", "kenangan", "cookies"],
-        "category": "Kuliner & Makanan",
+    "culinary": {
+        "keywords": ["kopi", "coffee", "snack", "makanan", "kuliner", "sambal", "keripik", "minuman", "frozen", "roti", "food"],
+        "category": "Makanan & Minuman Kuliner",
         "products": [
-            (1, "KL-SBL-001", "Sambal Bawang Cumi Mercon 150g Pedas Nampol", 32000, 100, "sambal,cumi,mercon,pedas,bawang"),
-            (2, "KL-KPI-002", "Kopi Arabika Single Origin Gayo 250g Roasting Fresh", 65000, 75, "kopi,coffee,arabika,gayo,biji kopi"),
-            (3, "KL-BCI-003", "Baso Aci Tulang Rangu Kuah Pedas Jeruk Limau", 18000, 150, "baso aci,boci,tulang rangu,instan"),
-            (4, "KL-KRP-004", "Keripik Kaca Daun Jeruk Extra Pedas 250g", 15000, 200, "keripik kaca,pedas,daun jeruk,snack"),
-            (5, "KL-BRN-005", "Brownies Fudgy Panggang Choco Melted Shiny", 45000, 60, "brownies,fudgy,coklat,cake,kue"),
-            (6, "KL-SBL-006", "Seblak Instan Komplit Topping Ceker Cuanki", 22000, 120, "seblak,instan,cuanki,ceker,pedas"),
-            (7, "KL-DDG-007", "Dendeng Sapi Balado Renyah Kering 100g", 58000, 40, "dendeng sapi,balado,lauk,renyah"),
-            (8, "KL-MDU-008", "Madu Murni Hutan Asli Raw Honey 500ml", 85000, 50, "madu,honey,madu murni,hutan"),
-            (9, "KL-CKS-009", "Cookies Red Velvet Cream Cheese Soft Baked", 49000, 70, "cookies,red velvet,cream cheese"),
-            (10, "KL-MTC-010", "Minuman Bubuk Matcha Latte Premium 10 Sachet", 35000, 90, "matcha,latte,minuman bubuk,greentea")
+            (1, "CUL-KPI-001", "Biji Kopi Arabika Gayo Specialty 250g", 75000, 100, "kopi,arabika,gayo,beans,biji kopi"),
+            (2, "CUL-SMB-002", "Sambal Cumi Ciamik Pedas Nampol 150g", 35000, 180, "sambal,cumi,pedas,lauk,makanan"),
+            (3, "CUL-KRP-003", "Keripik Kaca Pedas Daun Jeruk Gurih 200g", 18000, 250, "keripik,kaca,cemilan,snack,pedas"),
+            (4, "CUL-FRZ-004", "Dimsum Ayam Udang Premium Frozen Isi 20", 55000, 80, "dimsum,frozen food,ayam,udang"),
+            (5, "CUL-DRK-005", "Bubuk Minuman Matcha Latte Premium 500g", 69000, 90, "matcha,bubuk minuman,latte,greentea"),
+            (6, "CUL-ROT-006", "Roti Toast Mentega Coklat Crunchy", 25000, 120, "roti,toast,coklat,mentega"),
+            (7, "CUL-BAS-007", "Basreng Pedas Renyah Daun Jeruk 250g", 22000, 220, "basreng,bakso goreng,pedas"),
+            (8, "CUL-MDN-008", "Madu Murni Randu Alami 500g Original", 89000, 60, "madu,murni,randu,sehat"),
+            (9, "CUL-BMB-009", "Bumbu Nasi Goreng Spesial Instan Isi 5", 15000, 200, "bumbu,nasi goreng,instan"),
+            (10, "CUL-CKL-010", "Coklat Truffle Melted Artisan Box 12 Pcs", 49000, 100, "coklat,truffle,melted,manis")
         ],
         "comments": [
-            "Kak spill sambal cumi mercon no 1 dong pedes banget gak mau checkout!",
-            "Kopi Gayo no 2 bisa minta digilingin halus gak min?",
-            "Baso aci no 3 tahan berapa hari di suhu ruang kak?",
-            "Keripik kaca no 4 bumbu daun jeruknya gurih gak min mau beli 3",
-            "Brownies fudgy no 5 dapet topping apa aja kak?",
-            "Udah checkout sambal cumi no 1 ya min tolong kirim hari ini!",
-            "Bisa COD ke Jogja gak kak?",
-            "Seblak no 6 kuahnya kental pedas gurih kan min?",
-            "Madu no 8 asli 100% tanpa campuran kan kak?",
-            "Spill etalase 1 min mau lihat potongan cuminya"
+            "Sambal cumi no 2 tahan berapa lama kak di suhu ruang?",
+            "Biji kopi no 1 bisa digiling sekalian gak kak level gilingan V60?",
+            "Dimsum no 4 halal dan free saus pedas manis gak min?",
+            "Basreng no 7 bumbunya pedas nampol gak kak?",
+            "Udah co kopi no 1 dan basreng no 7 ya min tolong packing aman!"
         ]
     },
     "fashion": {
-        "keywords": ["distro", "kaos", "baju", "erigo", "streetwear", "clothing", "apparel", "hoodie", "jaket", "kemeja", "celana"],
-        "category": "Fashion & Distro",
+        "keywords": ["baju", "distro", "fashion", "kaos", "tshirt", "flanel", "celana", "erigo", "hoodie", "jacket"],
+        "category": "Distro & Streetwear Fashion",
         "products": [
-            (1, "FS-FLN-001", "Kemeja Flanel Oversize Pria Kotak Hitam", 89000, 45, "flanel,kemeja,kotak,hitam,oversize"),
-            (2, "FS-PLN-002", "Kemeja Putih Polos Slimfit Katun Oxford", 75000, 60, "putih,polos,formal,kerja,oxford"),
-            (3, "FS-CHN-003", "Celana Chino Panjang Slimfit Pria Abu Gelap", 99000, 30, "chino,celana panjang,abu,pria"),
-            (4, "FS-KOS-004", "Kaos Polos Heavyweight 24s Cotton Combed", 49000, 120, "kaos,tshirt,polos,cotton combed"),
-            (5, "FS-CRG-005", "Celana Cargo Panjang Relaxed Fit Army Green", 115000, 40, "cargo,celana cargo,army,panjang"),
-            (6, "FS-JKT-006", "Jaket Denim Jeans Bio Bleach Classic", 135000, 25, "jaket,denim,jeans,outer,bio bleach"),
-            (7, "FS-HOD-007", "Hoodie Fleece Boxy Oversize 330gsm Hitam", 159000, 35, "hoodie,fleece,boxy,oversize,sweater"),
-            (8, "FS-TAS-008", "Tas Selempang Kanvas Waterproof Unisex", 55000, 50, "tas,selempang,kanvas,slempang,bag"),
-            (9, "FS-BOX-009", "Boxer Celana Kolor Santai Cotton Motif", 25000, 100, "boxer,kolor,celana santai,katun"),
-            (10, "FS-TOP-010", "Topi Baseball Bordir New York Distro", 29000, 80, "topi,baseball,cap,distro,ny")
+            (1, "FSH-KAS-001", "Kemeja Flanel Katun Tartan Long Sleeve", 129000, 50, "kemeja,flanel,tartan,pria"),
+            (2, "FSH-TKT-002", "Kaos Polos Cotton Combed 24s Heavyweight", 65000, 150, "kaos polos,cotton combed,tshirt"),
+            (3, "FSH-CHN-003", "Celana Chino Panjang Pria Slimfit Stretch", 139000, 45, "chino,celana panjang,slimfit"),
+            (4, "FSH-JKT-004", "Coach Jacket Windproof Graphic Streetwear", 179000, 35, "coach jacket,jaket,windproof"),
+            (5, "FSH-CRG-005", "Celana Cargo Pendek Pria 6 Kantong", 99000, 60, "celana pendek,cargo,tactical"),
+            (6, "FSH-HOD-006", "Hoodie Pullover Fleece Boxy Fit 330gsm", 189000, 40, "hoodie,sweater,fleece,oversize"),
+            (7, "FSH-DNM-007", "Jaket Denim Jeans Washed Classic Indigo", 199000, 25, "jaket jeans,denim,indigo"),
+            (8, "FSH-VES-008", "Vest Rompi Utility Tactical Street", 115000, 45, "rompi,vest,tactical,utility"),
+            (9, "FSH-WST-009", "Tas Selempang Waistbag Waterproof Cordura", 59000, 80, "waistbag,tas selempang,cordura"),
+            (10, "FSH-HAT-010", "Topi Baseball Polos Vintage Washed", 39000, 100, "topi,baseball cap,vintage")
         ],
         "comments": [
-            "Kak tolong spill kemeja flanel no 1 dong mau checkout!",
             "Kemeja flanel no 1 ukuran XL lingkar dada berapa min?",
-            "Kaos no 4 bahannya 100% cotton combed 24s kan kak?",
-            "Celana cargo no 5 muat untuk BB 70 kg gak min?",
-            "Jaket denim no 6 bahannya tebal dan kaku gak kak?",
-            "Spill hoodie no 7 min mau lihat bagian tudung kepalanya",
-            "Udah checkout kemeja no 1 dan celana chino no 3 ya min!",
-            "Bisa COD ke Bandung gak kak?",
-            "Topi no 10 pengait belakangnya besi atau plastik?",
-            "Semangat live nya kak bajunya keren-keren banget!"
+            "Kaos no 2 bahannya 100% cotton combed 24s kan kak?",
+            "Celana chino no 3 muat untuk BB 70 kg gak min?",
+            "Spill hoodie no 6 min mau lihat bagian tudung kepalanya",
+            "Udah checkout kemeja no 1 dan celana chino no 3 ya min!"
         ]
     }
 }
@@ -224,10 +255,57 @@ def clean_store_title(streamer: str) -> str:
     words = [w.capitalize() for w in s.split() if w]
     return " ".join(words) if words else "Toko Pilihan"
 
+def save_custom_store_catalog(streamer: str, products_list: list) -> bool:
+    """Menyimpan katalog kustom toko ke penyimpanan JSON permanen."""
+    clean = streamer.lower().replace("@", "").strip()
+    filepath = os.path.join(CUSTOM_CATALOGS_DIR, f"{clean}_catalog.json")
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(products_list, f, indent=2, ensure_ascii=False)
+    return True
+
 def get_store_catalog(streamer: str) -> pd.DataFrame:
-    """Mengembalikan katalog 10 produk yang 100% sesuai dengan toko tersebut."""
-    niche = detect_store_niche(streamer)
+    """Mengembalikan katalog produk toko (Kustom Toko > Katalog Brand Resmi > Niche Catalog > Universal)."""
+    clean = streamer.lower().replace("@", "").strip()
     
+    # 1. Cek apakah ada katalog kustom yang disimpan pengguna untuk toko ini
+    custom_filepath = os.path.join(CUSTOM_CATALOGS_DIR, f"{clean}_catalog.json")
+    if os.path.exists(custom_filepath):
+        try:
+            with open(custom_filepath, "r", encoding="utf-8") as f:
+                items = json.load(f)
+            data = []
+            for it in items:
+                data.append({
+                    "etalase_no": int(it["etalase_no"]),
+                    "sku": str(it.get("sku", f"PRD-{clean[:4].upper()}-{int(it['etalase_no']):03d}")),
+                    "product_name": str(it["product_name"]),
+                    "category": str(it.get("category", f"Katalog {clean_store_title(streamer)}")),
+                    "price_idr": int(it["price_idr"]),
+                    "stock": int(it.get("stock", 50)),
+                    "keywords": str(it.get("keywords", str(it["product_name"]).lower()))
+                })
+            return pd.DataFrame(data)
+        except Exception as e:
+            print(f"[CUSTOM CATALOG ERROR] {e}")
+
+    # 2. Cek apakah streamer cocok dengan brand spesifik resmi
+    for brand_key, brand_data in BRAND_CATALOGS.items():
+        if brand_key in clean:
+            data = []
+            for r in brand_data["products"]:
+                data.append({
+                    "etalase_no": r[0],
+                    "sku": r[1],
+                    "product_name": r[2],
+                    "category": brand_data["category"],
+                    "price_idr": r[3],
+                    "stock": r[4],
+                    "keywords": r[5]
+                })
+            return pd.DataFrame(data)
+
+    # 3. Niche Fallback
+    niche = detect_store_niche(streamer)
     if niche in STORE_NICHES:
         rows = STORE_NICHES[niche]["products"]
         data = []
@@ -242,36 +320,36 @@ def get_store_catalog(streamer: str) -> pd.DataFrame:
                 "keywords": r[5]
             })
         return pd.DataFrame(data)
-    else:
-        # Universal Dynamic Catalog
-        title = clean_store_title(streamer)
-        items = [
-            (1, f"{title} - Produk Terlaris No. 1 Best Seller", 89000, 50, "terlaris,bestseller,no1"),
-            (2, f"{title} - Produk Unggulan Rekomendasi Host", 125000, 35, "unggulan,rekomendasi,spesial"),
-            (3, f"{title} - Paket Hemat Spesial Live Shopping", 65000, 60, "paket hemat,promo,diskon"),
-            (4, f"{title} - Edisi Terbaru New Arrival 2026", 99000, 40, "baru,new arrival,terbaru"),
-            (5, f"{title} - Varian Favorit Pilihan Pelanggan", 49000, 80, "favorit,murah,terjangkau"),
-            (6, f"{title} - Premium Exclusive Quality Edition", 175000, 20, "premium,exclusive,mewah"),
-            (7, f"{title} - Aksesoris & Perlengkapan Tambahan", 35000, 100, "aksesoris,pelengkap"),
-            (8, f"{title} - Edisi Terbatas Limited Special Drop", 145000, 25, "limited,terbatas,spesial"),
-            (9, f"{title} - Paket Bundling Komplit Hemat", 110000, 45, "bundling,komplit,paket"),
-            (10, f"{title} - Voucher Belanja & Merchandise Resmi", 25000, 150, "voucher,merchandise,resmi")
-        ]
-        data = []
-        for it in items:
-            data.append({
-                "etalase_no": it[0],
-                "sku": f"PRD-UNV-{it[0]:03d}",
-                "product_name": it[1],
-                "category": f"Katalog {title}",
-                "price_idr": it[2],
-                "stock": it[3],
-                "keywords": it[4]
-            })
-        return pd.DataFrame(data)
+
+    # 4. Universal Fallback
+    title = clean_store_title(streamer)
+    items = [
+        (1, f"{title} - Produk Terlaris No. 1 Best Seller", 89000, 50, "terlaris,bestseller,no1"),
+        (2, f"{title} - Produk Unggulan Rekomendasi Host", 125000, 35, "unggulan,rekomendasi,spesial"),
+        (3, f"{title} - Paket Hemat Spesial Live Shopping", 65000, 60, "paket hemat,promo,diskon"),
+        (4, f"{title} - Edisi Terbaru New Arrival 2026", 99000, 40, "baru,new arrival,terbaru"),
+        (5, f"{title} - Varian Favorit Pilihan Pelanggan", 49000, 80, "favorit,murah,terjangkau"),
+        (6, f"{title} - Premium Exclusive Quality Edition", 175000, 20, "premium,exclusive,mewah"),
+        (7, f"{title} - Aksesoris & Perlengkapan Tambahan", 35000, 100, "aksesoris,pelengkap"),
+        (8, f"{title} - Edisi Terbatas Limited Special Drop", 145000, 25, "limited,terbatas,spesial"),
+        (9, f"{title} - Paket Bundling Komplit Hemat", 110000, 45, "bundling,komplit,paket"),
+        (10, f"{title} - Voucher Belanja & Merchandise Resmi", 25000, 150, "voucher,merchandise,resmi")
+    ]
+    data = []
+    for it in items:
+        data.append({
+            "etalase_no": it[0],
+            "sku": f"PRD-UNV-{it[0]:03d}",
+            "product_name": it[1],
+            "category": f"Katalog {title}",
+            "price_idr": it[2],
+            "stock": it[3],
+            "keywords": it[4]
+        })
+    return pd.DataFrame(data)
 
 def get_store_comments(streamer: str) -> list[str]:
-    """Mengembalikan daftar komentar yang 100% selaras dengan niche toko."""
+    """Mengembalikan daftar komentar simulasi yang sesuai jika dibutuhkan."""
     niche = detect_store_niche(streamer)
     if niche in STORE_NICHES:
         return STORE_NICHES[niche]["comments"]
@@ -281,13 +359,5 @@ def get_store_comments(streamer: str) -> list[str]:
             f"Kak tolong spill etalase nomor 1 dari {title} dong mau checkout sekarang!",
             f"Etalase 2 ready stok banyak gak min mau order 2 pcs?",
             f"Bisa COD ke luar kota gak kak {streamer}?",
-            f"Udah checkout etalase nomor 1 ya min tolong segera diproses!",
-            f"Spill etalase 3 dong min mau lihat detail paketnya",
-            f"Pengiriman dari kota mana ya kak {title}?",
-            f"Produk no 1 kualitasnya original dan terjamin kan min?",
-            f"Ada garansi uang kembali gak kak kalo barang tidak sesuai?",
-            f"Spill etalase nomor 4 min mau lihat tampak belakangnya",
-            f"Semangat live nya kak {streamer} lancar terus usahanya!",
-            f"Bisa kirim sameday / instan hari ini gak kak?",
-            f"Udah co etalase nomor 2 ya min jangan lupa bonusnya ya!"
+            f"Udah checkout etalase nomor 1 ya min tolong segera diproses!"
         ]

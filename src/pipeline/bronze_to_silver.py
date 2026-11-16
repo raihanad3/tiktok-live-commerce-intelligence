@@ -60,8 +60,8 @@ class BronzeToSilverProcessor:
         if not text:
             return None
 
-        # Pola 1: 'no 1', 'nomor 2', 'etalase 3', 'eta 4', 'spill 5', '#6', 'co 7'
-        match = re.search(r'(?:no|nomor|etalase|eta|co|spill|#)\s*([0-9]{1,2})', text, re.IGNORECASE)
+        # Pola 1: 'no 1', 'nomor 2', 'etalase 3', 'eta 4', 'etls 4', 'spill 5', '#6', 'co 7'
+        match = re.search(r'(?:no|nomor|etalase|etls|eta|co|spill|#)\s*([0-9]{1,2})', text, re.IGNORECASE)
         if match:
             return int(match.group(1))
 
@@ -75,6 +75,26 @@ class BronzeToSilverProcessor:
                     if kw.strip() and kw.strip().lower() in text_lower:
                         return int(row["etalase_no"])
         return None
+
+    @staticmethod
+    def extract_product_subject(text: str) -> str:
+        """Mengekstrak kemungkinan subjek/nama produk dari komentar live jika belum ada di katalog resmi."""
+        if not text:
+            return ""
+        # Hapus kata-kata percakapan umum live stream
+        cleaned = re.sub(
+            r'(?:kak|min|host|tolong|dong|spill|eta|etls|etalase|nomor|no|co|checkout|ready|ga|gak|ada|yg|yang|warna|size|ukuran|bisa|cod|promo|diskon|murah|banget|nih|ya|gas|skrg|sekarang|order|beli|cek|in|ke|dari|untuk|buat|mau|\?|\!|\#|[0-9]+)',
+            ' ',
+            text,
+            flags=re.IGNORECASE
+        )
+        cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+        words = cleaned.split()
+        if words:
+            sub = " ".join(words[:4]).strip()
+            if len(sub) >= 3:
+                return sub.title()
+        return ""
 
     def validate_quality_gate(self, event: dict) -> tuple[bool, str]:
         """
@@ -156,7 +176,8 @@ class BronzeToSilverProcessor:
                 product_name = str(matched.iloc[0]["product_name"])
                 price_idr = int(matched.iloc[0]["price_idr"])
             else:
-                product_name = f"Etalase #{extracted_etalase}"
+                subj = self.extract_product_subject(data.get("comment_text", "")) if event_type == "comment" else ""
+                product_name = f"Etalase #{extracted_etalase} - {subj}" if subj else f"Etalase #{extracted_etalase}"
                 price_idr = 75000
 
         silver_record = {
