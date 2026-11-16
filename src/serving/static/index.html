@@ -338,6 +338,7 @@
     let sentimentChartInstance = null;
     let demandChartInstance = null;
     let seenCommentIds = new Set();
+    let currentActiveSessionId = null;
 
     function initCharts() {
       // 1. Sentiment Donut Chart
@@ -472,7 +473,9 @@
 
         if (resp.ok) {
           const resJson = await resp.json();
+          currentActiveSessionId = resJson.session_id;
           document.getElementById('activeStoreBadge').innerText = `Aktif: ${resJson.streamer}`;
+          document.getElementById('targetUsername').value = resJson.streamer.replace('@', '');
           if (resJson.niche) {
             document.getElementById('nicheBadge').innerText = resJson.niche.toUpperCase();
           }
@@ -481,13 +484,17 @@
           document.getElementById('liveChatBox').innerHTML = '<div class="text-xs text-slate-500 text-center py-4">Memulai pemantauan toko ' + resJson.streamer + '...</div>';
           seenCommentIds.clear();
 
-          // Reset sementara chart
+          // Reset sementara chart dan tabel
           if (demandChartInstance) {
             demandChartInstance.data.labels = [];
             demandChartInstance.data.datasets[0].data = [];
             demandChartInstance.data.datasets[1].data = [];
             demandChartInstance.update();
           }
+          document.getElementById('productTableBody').innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-400">Menyinkronkan data etalase ' + resJson.streamer + '...</td></tr>';
+          document.getElementById('topEtalaseBadge').innerText = 'Etalase #--';
+          document.getElementById('topEtalaseName').innerText = 'Memuat katalog ' + resJson.streamer;
+          document.getElementById('copilotAdvice').innerHTML = 'Menghubungkan ke siaran <strong>' + resJson.streamer + '</strong>... Rekomendasi etalase akan muncul otomatis.';
 
           // Tampilkan Banner Sukses
           const toast = document.getElementById('statusToast');
@@ -522,6 +529,12 @@
 
             if (d.streamer) {
               document.getElementById('activeStoreBadge').innerText = `Aktif: ${d.streamer}`;
+              if (document.activeElement !== document.getElementById('targetUsername')) {
+                document.getElementById('targetUsername').value = d.streamer.replace('@', '');
+              }
+            }
+            if (d.session_id) {
+              currentActiveSessionId = d.session_id;
             }
             if (d.niche) {
               document.getElementById('nicheBadge').innerText = d.niche.toUpperCase();
@@ -549,6 +562,9 @@
         });
         if (resComments.ok) {
           const jsonComments = await resComments.json();
+          if (jsonComments.session_id && currentActiveSessionId && jsonComments.session_id !== currentActiveSessionId) {
+            return;
+          }
           const comments = jsonComments.comments || [];
           const chatBox = document.getElementById('liveChatBox');
 
@@ -620,6 +636,9 @@
         });
         if (resProd.ok) {
           const jsonProd = await resProd.json();
+          if (jsonProd.session_id && currentActiveSessionId && jsonProd.session_id !== currentActiveSessionId) {
+            return;
+          }
           const rows = jsonProd.leaderboard || [];
           const tbody = document.getElementById('productTableBody');
 

@@ -358,7 +358,7 @@ def get_live_summary(role: str = Header("viewer")):
     try:
         with DatabaseContext() as db:
             cur = db.execute_query(
-                "SELECT * FROM mart_live_summary WHERE session_id = %s ORDER BY rowid DESC LIMIT 1;",
+                "SELECT * FROM mart_live_summary WHERE session_id = %s ORDER BY last_updated DESC LIMIT 1;",
                 (active_session_id,)
             )
             row = cur.fetchone()

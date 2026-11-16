@@ -14,6 +14,9 @@ import argparse
 from datetime import datetime, timezone
 from kafka import KafkaProducer
 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from common.store_catalog import get_store_comments
+
 # Inisialisasi Konfigurasi Broker
 KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 TOPIC_RAW = os.getenv("REDPANDA_TOPIC_RAW", "tiktok.events.raw")
@@ -125,20 +128,7 @@ def run_fallback_simulation(streamer: str, producer: KafkaProducer):
     print(f"\n[REPLAYER] Mode Replayer Aktif untuk akun: {clean_username}")
     print("[REPLAYER] Mengalirkan interaksi langsung ke Redpanda (Tekan Ctrl+C untuk berhenti)...")
 
-    sample_comments = [
-        "Kak tolong spill kemeja flanel no 1 dong!",
-        "Etalase 2 warna putih ada ukuran XL gak min?",
-        "Kak mau checkout celana chino no 3 ada diskon gak?",
-        "Baju dress no 5 muat untuk BB 60kg ga kak?",
-        "Halo kak salam dari Surabaya",
-        "Pengiriman ke Bandung berapa lama min?",
-        "Spill etalase 1 kak mau lihat bahannya",
-        "Kemeja putih no 2 bisa COD gak min?",
-        "Kak barang pesanan kemarin kok belum sampai ya, statusnya masih dikemas",
-        "Topi nomor 10 ready warna apa aja kak?",
-        "Follback kak",
-        "Udah checkout no 3 ya kak tolong segera diproses ya"
-    ]
+    sample_comments = get_store_comments(clean_username)
 
     sample_users = ["Rian_99", "Dinda_Style", "Budi_Santoso", "Siti_Fashion", "Andi_Pratama", "Maya_Kurnia"]
 
