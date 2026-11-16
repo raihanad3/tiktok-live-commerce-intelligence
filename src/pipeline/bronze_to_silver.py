@@ -60,8 +60,8 @@ class BronzeToSilverProcessor:
         if not text:
             return None
 
-        # Pola 1: 'no 1', 'nomor 2', 'etalase 3', 'co 4'
-        match = re.search(r'(?:no|nomor|etalase|co)\s*([0-9]{1,2})', text, re.IGNORECASE)
+        # Pola 1: 'no 1', 'nomor 2', 'etalase 3', 'eta 4', 'spill 5', '#6', 'co 7'
+        match = re.search(r'(?:no|nomor|etalase|eta|co|spill|#)\s*([0-9]{1,2})', text, re.IGNORECASE)
         if match:
             return int(match.group(1))
 

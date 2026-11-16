@@ -73,10 +73,14 @@
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>
           </div>
           <div>
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center flex-wrap gap-2">
               <h2 class="text-sm font-semibold text-white">Target Siaran Toko TikTok</h2>
               <span id="activeStoreBadge" class="text-xs bg-pink-500/20 text-pink-300 font-bold px-2 py-0.5 rounded-full border border-pink-500/30">Aktif: @tokobajumurah</span>
               <span id="nicheBadge" class="text-[10px] bg-cyan-500/20 text-cyan-300 font-medium px-2 py-0.5 rounded-full border border-cyan-500/30">Fashion & Baju</span>
+              <span id="streamModeBadge" class="text-[10px] bg-amber-500/20 text-amber-300 font-bold px-2.5 py-0.5 rounded-full border border-amber-500/30 flex items-center space-x-1.5">
+                <span id="modeDot" class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                <span id="modeText">🟡 DEMO REPLAYER</span>
+              </span>
             </div>
             <p class="text-xs text-slate-400">Ketik username akun atau klik pilihan toko di bawah ini</p>
           </div>
@@ -224,9 +228,9 @@
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
                 <span class="relative inline-flex rounded-full h-2 w-2 bg-pink-500"></span>
               </span>
-              <h3 class="text-base font-bold text-white">Aliran Chat Langsung TikTok (Live Stream)</h3>
+              <h3 class="text-base font-bold text-white">Aliran Chat Langsung TikTok</h3>
             </div>
-            <span class="text-[11px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md border border-slate-700">Auto-Scrolling</span>
+            <span id="chatSourceLabel" class="text-[11px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md border border-slate-700">Auto-Scrolling</span>
           </div>
 
           <!-- CHAT BOX CONTAINER -->
@@ -538,6 +542,27 @@
             }
             if (d.niche) {
               document.getElementById('nicheBadge').innerText = d.niche.toUpperCase();
+            }
+
+            // Update Stream Mode Badge (Real-Time Scraping vs Demo Replayer)
+            const isReal = jsonSum.is_real_live || (d && d.is_real_live) || (jsonSum.stream_mode === 'REALTIME_TIKTOK_LIVE');
+            const modeBadge = document.getElementById('streamModeBadge');
+            const modeDot = document.getElementById('modeDot');
+            const modeText = document.getElementById('modeText');
+            const chatLabel = document.getElementById('chatSourceLabel');
+
+            if (modeBadge && modeDot && modeText) {
+              if (isReal) {
+                modeBadge.className = "text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-2.5 py-0.5 rounded-full border border-emerald-500/30 flex items-center space-x-1.5 shadow-sm shadow-emerald-500/20";
+                modeDot.className = "w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping";
+                modeText.innerText = "🟢 REAL-TIME TIKTOK LIVE";
+                if (chatLabel) chatLabel.innerText = "Live Penonton Asli TikTok";
+              } else {
+                modeBadge.className = "text-[10px] bg-amber-500/20 text-amber-300 font-bold px-2.5 py-0.5 rounded-full border border-amber-500/30 flex items-center space-x-1.5";
+                modeDot.className = "w-1.5 h-1.5 rounded-full bg-amber-400";
+                modeText.innerText = "🟡 DEMO REPLAYER";
+                if (chatLabel) chatLabel.innerText = "Simulasi Niche (Akun Offline)";
+              }
             }
 
             const buy = d.purchase_intent_count || 0;
