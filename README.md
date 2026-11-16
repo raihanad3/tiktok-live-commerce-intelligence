@@ -119,27 +119,48 @@ Agregasikan data Silver menjadi Analytical Marts di PostgreSQL:
 python src/pipeline/silver_to_gold.py
 ```
 
-### Langkah 7: Jalankan Serving REST API (F-10, F-12, F-16)
+### Langkah 7: Jalankan Serving REST API & Live Cockpit UI (F-10, F-12, F-16)
 ```bash
 uvicorn src.serving.app:app --host 0.0.0.0 --port 8000 --reload
 ```
-Akses dokumentasi interaktif Swagger API di: **`http://localhost:8000/docs`**
+- Akses **TikPulse Live Host Cockpit Dashboard**: **`http://localhost:8000/`**
+- Akses dokumentasi interaktif **Swagger REST API**: **`http://localhost:8000/docs`**
 
 ---
 
 ## 5. Antarmuka Akses Pengguna & Port Inventory
 
-| Layanan | URL Akses | Kredensial Default |
+| Layanan | URL Akses | Deskripsi & Kredensial Default |
 | :--- | :--- | :--- |
-| **FastAPI Swagger Docs** | `http://localhost:8000/docs` | Header `X-User-Role: viewer` atau `admin` |
+| **TikPulse Live Cockpit UI** | `http://localhost:8000/` | Dashboard real-time host: Chat Waterfall, Teleprompter AI Copilot, Leaderboard Etalase, Editor Katalog Toko |
+| **FastAPI Swagger Docs** | `http://localhost:8000/docs` | Dokumentasi REST API lengkap (Header `X-User-Role: viewer` atau `admin`) |
 | **Grafana Dashboard** | `http://localhost:3000` | User: `admin` \| Pass: `admin_tikpulse` |
 | **MinIO Console** | `http://localhost:9001` | User: `minio_admin` \| Pass: `minio_secure_password_2026` |
-| **Prometheus Metrics** | `http://localhost:9090` | Tanpa password |
-| **Redpanda Admin** | `http://localhost:9644/public_metrics` | Metrik internal broker |
+| **Prometheus Metrics** | `http://localhost:9090` | Telemetri metrik real-time |
+| **Redpanda Admin** | `http://localhost:9644/public_metrics` | Metrik internal Kafka/Redpanda broker |
 
 ---
 
-## 6. Pengujian & Quality Assurance (F-18)
+## 6. Fitur Unggulan Interaktif Dashboard Live Commerce
+
+1. **Scraper Real-Time Langsung dari TikTok Live Room (`TikTokLiveClient`):**
+   - Terkoneksi langsung ke Webcast Protobuf/WebSocket TikTok tanpa API Key berbayar.
+   - Deteksi otomatis status siaran yang jujur dan transparan: Menampilkan banner jelas **`🔴 Toko Sedang Tidak Live`** saat toko offline, dan **`🟢 REAL-TIME TIKTOK LIVE`** seketika streamer online.
+2. **Katalog Produk Resmi & Editor Etalase Mandiri (`✏️ Sesuaikan Nama Etalase`):**
+   - Dilengkapi katalog bawaan brand resmi populer seperti `@aerostreet`, `@somethincofficial`, `@raysportindo`, dan `@erigostore`.
+   - Tombol **`✏️ Sesuaikan Nama Etalase`** di dashboard membuka modal untuk mengedit nomor etalase, nama produk resmi, dan harga secara fleksibel.
+   - Perubahan langsung tersimpan di disk (`data/catalogs/{streamer}_catalog.json`) dan disinkronkan secara instan ke tabel database analitik serta grafik chart.
+3. **Ekstraksi Subjek Otomatis (NLP Dynamic Extraction):**
+   - Ekstraksi nomor etalase dengan pola slang TikTok (`eta`, `etls`, `no`, `nomor`, `#`, `spill`, `co`).
+   - Mampu mengekstrak kata kunci produk dari teks komentar (contoh: *"Coverblurr Cushion Refill eta 25"*) menjadi nama produk yang substantif pada chart.
+4. **Isolasi Penuh Data per Sesi Toko (`session_id`):**
+   - Pergantian toko (`POST /api/v1/session/switch`) membuat ID sesi terisolasi sehingga metrik, chart, dan leaderboard tidak pernah tercampur antar toko.
+5. **Zero-Latency ACID Fallback:**
+   - Caching ketersediaan PostgreSQL yang otomatis beralih ke SQLite ACID sub-millisecond tanpa freeze/timeout.
+
+---
+
+## 7. Pengujian & Quality Assurance (F-18)
 
 Jalankan rangkaian unit test dan ukur code coverage:
 ```bash
@@ -149,7 +170,7 @@ pytest --cov=src tests/ -v
 
 ---
 
-## 7. Pemetaan Kepatuhan Spesifikasi Tugas (F-01 s.d. F-20)
+## 8. Pemetaan Kepatuhan Spesifikasi Tugas (F-01 s.d. F-20)
 
 | Kode Req | Kriteria Wajib | Bukti Implementasi di TikPulse |
 | :--- | :--- | :--- |
