@@ -146,17 +146,23 @@ uvicorn src.serving.app:app --host 0.0.0.0 --port 8000 --reload
 1. **Scraper Real-Time Langsung dari TikTok Live Room (`TikTokLiveClient`):**
    - Terkoneksi langsung ke Webcast Protobuf/WebSocket TikTok tanpa API Key berbayar.
    - Deteksi otomatis status siaran yang jujur dan transparan: Menampilkan banner jelas **`🔴 Toko Sedang Tidak Live`** saat toko offline, dan **`🟢 REAL-TIME TIKTOK LIVE`** seketika streamer online.
-2. **Katalog Produk Resmi & Editor Etalase Mandiri (`✏️ Sesuaikan Nama Etalase`):**
+   - Dilengkapi hook event **`OecLiveShoppingEvent`** yang otomatis menangkap nama produk dan nomor etalase ketika disematkan (*pin/pop-up*) oleh host.
+2. **Katalog Produk Resmi, Editor Etalase Mandiri, & Fitur 📋 Tempel Cepat (Quick Paste):**
    - Dilengkapi katalog bawaan brand resmi populer seperti `@aerostreet`, `@somethincofficial`, `@raysportindo`, dan `@erigostore`.
    - Tombol **`✏️ Sesuaikan Nama Etalase`** di dashboard membuka modal untuk mengedit nomor etalase, nama produk resmi, dan harga secara fleksibel.
+   - Fitur **`📋 Tempel Cepat (Quick Paste)`**: Host/operator dapat menempelkan daftar 20+ etalase langsung dalam 5 detik dengan parsing otomatis format nomor etalase, judul produk, dan harga.
    - Perubahan langsung tersimpan di disk (`data/catalogs/{streamer}_catalog.json`) dan disinkronkan secara instan ke tabel database analitik serta grafik chart.
 3. **Ekstraksi Subjek Otomatis (NLP Dynamic Extraction):**
-   - Ekstraksi nomor etalase dengan pola slang TikTok (`eta`, `etls`, `no`, `nomor`, `#`, `spill`, `co`).
+   - Ekstraksi nomor etalase dengan pola slang TikTok (`eta`, `etls`, `no`, `nomor`, `#`, `spill`, `co`) menggunakan *word boundaries* (`\b`) agar kata dasar tidak terfragmentasi.
    - Mampu mengekstrak kata kunci produk dari teks komentar (contoh: *"Coverblurr Cushion Refill eta 25"*) menjadi nama produk yang substantif pada chart.
-4. **Isolasi Penuh Data per Sesi Toko (`session_id`):**
+4. **3-Layer Hybrid Niche Detection:**
+   - Deteksi kategori industri toko secara cerdas: (1) Brand Resmi $\to$ (2) Manual Dropdown Override di Navbar UI $\to$ (3) Consistent MD5 Hash Assignment untuk toko baru.
+5. **Isolasi Penuh Data per Sesi Toko (`session_id`):**
    - Pergantian toko (`POST /api/v1/session/switch`) membuat ID sesi terisolasi sehingga metrik, chart, dan leaderboard tidak pernah tercampur antar toko.
-5. **Zero-Latency ACID Fallback:**
+6. **Zero-Latency ACID Fallback:**
    - Caching ketersediaan PostgreSQL yang otomatis beralih ke SQLite ACID sub-millisecond tanpa freeze/timeout.
+7. **Panduan Lengkap Presentasi & Uji Sidang:**
+   - Dokumentasi persiapan presentasi lengkap tersedia di [`docs/PRESENTATION_GUIDE.md`](docs/PRESENTATION_GUIDE.md), mencakup susunan 12 slide presentasi, naskah presentasi, hingga tips menjawab pertanyaan dosen (*Q&A defense*).
 
 ---
 
