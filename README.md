@@ -162,7 +162,7 @@ uvicorn src.serving.app:app --host 0.0.0.0 --port 8000 --reload
 6. **Zero-Latency ACID Fallback:**
    - Caching ketersediaan PostgreSQL yang otomatis beralih ke SQLite ACID sub-millisecond tanpa freeze/timeout.
 7. **Panduan Lengkap Presentasi & Uji Sidang:**
-   - Dokumentasi persiapan presentasi lengkap tersedia di [`docs/PRESENTATION_GUIDE.md`](docs/PRESENTATION_GUIDE.md), mencakup susunan 12 slide presentasi, naskah presentasi, hingga tips menjawab pertanyaan dosen (*Q&A defense*).
+   - Dokumentasi persiapan presentasi lengkap tersedia di file utama [`PRESENTATION_GUIDE.md`](PRESENTATION_GUIDE.md), mencakup susunan 12 slide presentasi, naskah presentasi, hingga tips menjawab pertanyaan dosen (*Q&A defense*).
 
 ---
 
