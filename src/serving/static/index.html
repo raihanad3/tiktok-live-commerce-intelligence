@@ -40,6 +40,16 @@
       </div>
 
       <div class="flex items-center space-x-2.5">
+        <!-- Live Viewer & Latency Telemetry Badges -->
+        <span id="viewerCountBadge" class="hidden sm:inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-slate-800/90 border border-slate-700 text-slate-200 text-xs font-medium" title="Jumlah penonton live saat ini">
+          <span>👁️</span>
+          <span id="viewerCountText">0</span>
+        </span>
+        <span id="latencyBadge" class="hidden md:inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-slate-800/90 border border-slate-700 text-cyan-300 text-xs font-mono" title="Mode transport & rata-rata latensi pemrosesan event">
+          <span id="sseStatusDot" class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+          <span id="latencyText">POLL • -- ms</span>
+        </span>
+
         <!-- Simulasi Demo Toggle Button (Opsional untuk presentasi) -->
         <button id="btnSimDemo" onclick="toggleSimDemo()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs transition" title="Nyalakan/matikan simulasi jika ingin mencoba saat toko offline">
           <span id="simIcon">🎭</span>
@@ -59,6 +69,12 @@
             <span id="staticDot" class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
           </span>
           <span id="streamStatusText">STREAM: LIVE AKTIF</span>
+        </button>
+
+        <!-- Disconnect Live Button (OFF) -->
+        <button id="btnDisconnect" onclick="disconnectLive()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 text-xs font-semibold transition" title="Putus koneksi WebSocket TikTok Live (OFF)">
+          <span>⏹️</span>
+          <span>Putus Live</span>
         </button>
 
         <a href="/docs" target="_blank" class="text-xs text-slate-300 hover:text-white px-3 py-1.5 rounded-lg border border-slate-700 hover:bg-slate-800 transition">
@@ -238,15 +254,40 @@
 
         <!-- LIVE CHAT WATERFALL FEED (REAL-TIME STREAMING) -->
         <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-3">
-          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
             <div class="flex items-center space-x-2">
               <span class="relative flex h-2 w-2">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
                 <span class="relative inline-flex rounded-full h-2 w-2 bg-pink-500"></span>
               </span>
               <h3 class="text-base font-bold text-white">Aliran Chat Langsung TikTok</h3>
+              <button id="btnChatPause" onclick="toggleChatPause()" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-2 py-0.5 rounded-full font-semibold transition" title="Jeda atau lanjutkan aliran tampilan chat secara manual">⏸️ Jeda</button>
             </div>
-            <span id="chatSourceLabel" class="text-[11px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md border border-slate-700">Auto-Scrolling</span>
+
+            <!-- Opsi B: Mode Kecepatan Switch (Normal vs Lambat) -->
+            <div class="flex items-center space-x-2">
+              <div class="inline-flex rounded-lg bg-slate-950 p-0.5 border border-slate-800 text-[11px]">
+                <button id="btnModeNormal" onclick="setChatSpeedMode('normal')" class="px-2.5 py-1 rounded-md font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 transition">⚡ Normal</button>
+                <button id="btnModeSlow" onclick="setChatSpeedMode('slow')" class="px-2.5 py-1 rounded-md font-medium text-slate-400 hover:text-white transition">🐢 Lambat</button>
+              </div>
+              <select id="slowSpeedSelect" onchange="setSlowInterval(this.value)" class="hidden bg-slate-950 border border-slate-700 text-amber-300 rounded-lg px-2 py-1 text-[11px] font-semibold focus:outline-none focus:border-amber-500" title="Kecepatan tampil chat baru pada mode lambat">
+                <option value="1500">1.5 dtk</option>
+                <option value="3000" selected>3 dtk</option>
+                <option value="5000">5 dtk</option>
+              </select>
+              <span id="chatSourceLabel" class="text-[11px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md border border-slate-700">Auto-Scrolling</span>
+            </div>
+          </div>
+
+          <!-- Filter Tag Pills -->
+          <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 text-[11px] scrollbar-none">
+            <span class="text-slate-500 font-medium shrink-0 mr-1">Filter:</span>
+            <button data-chat-filter="ALL" onclick="setChatFilter('ALL')" class="chat-filter-btn px-2.5 py-1 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/40 font-semibold shrink-0 transition">Semua</button>
+            <button data-chat-filter="IMPORTANT" onclick="setChatFilter('IMPORTANT')" class="chat-filter-btn px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700 hover:border-slate-500 shrink-0 transition">🎯 Penting</button>
+            <button data-chat-filter="INTENT_BUY" onclick="setChatFilter('INTENT_BUY')" class="chat-filter-btn px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700 hover:border-emerald-500/40 shrink-0 transition">🛍️ Niat Beli</button>
+            <button data-chat-filter="QUESTION" onclick="setChatFilter('QUESTION')" class="chat-filter-btn px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700 hover:border-blue-500/40 shrink-0 transition">❓ Tanya</button>
+            <button data-chat-filter="COMPLAINT" onclick="setChatFilter('COMPLAINT')" class="chat-filter-btn px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700 hover:border-rose-500/40 shrink-0 transition">⚠️ Komplain</button>
+            <button data-chat-filter="GIFT" onclick="setChatFilter('GIFT')" class="chat-filter-btn px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700 hover:border-amber-500/40 shrink-0 transition">🎁 Gift</button>
           </div>
 
           <!-- CHAT BOX CONTAINER -->
@@ -269,6 +310,15 @@
               </button>
               <span class="text-xs bg-slate-800 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-700">Gold Mart</span>
             </div>
+          </div>
+
+          <!-- PINNED PRODUCT SPOTLIGHT (Hanya muncul bila OecLiveShoppingEvent tertangkap) -->
+          <div id="pinnedProductBanner" class="hidden mb-4 p-3 rounded-xl bg-gradient-to-r from-emerald-950/70 via-slate-800/80 to-slate-900 border border-emerald-500/40 flex items-center justify-between gap-3">
+            <div class="flex items-center space-x-2.5 min-w-0">
+              <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold shrink-0">📌 DI-PIN HOST</span>
+              <span id="pinnedProductTitle" class="text-xs font-semibold text-white truncate">--</span>
+            </div>
+            <span id="pinnedProductPrice" class="text-xs font-bold text-emerald-400 shrink-0">--</span>
           </div>
 
           <div class="overflow-x-auto">
@@ -364,7 +414,470 @@
     let sentimentChartInstance = null;
     let demandChartInstance = null;
     let seenCommentIds = new Set();
+    let recordedEventIds = new Set();
+    let recentClientEvents = [];
     let currentActiveSessionId = null;
+    let currentStreamMode = 'OFFLINE';
+    let isRefreshing = false;
+    let sseSource = null;
+    let sseConnected = false;
+    let pendingChatQueue = [];
+    let chatFlushScheduled = false;
+    let lastChatFlushTime = 0;
+    let lastSecondaryRefreshTime = 0;
+    let chatSpeedMode = 'normal'; // 'normal' | 'slow'
+    let slowIntervalMs = 3000;
+    let activeChatFilter = 'ALL'; // 'ALL' | 'IMPORTANT' | 'INTENT_BUY' | 'QUESTION' | 'COMPLAINT' | 'GIFT'
+    let isChatPausedManual = false;
+    let slowModePool = [];
+    let slowModeTimer = null;
+    let pendingSummaryPayload = null;
+    let summaryFlushTimer = null;
+    let lastSummaryFlushTime = 0;
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function updateTelemetryBadges(viewerCount, avgLatencyMs) {
+      const vText = document.getElementById('viewerCountText');
+      if (vText && viewerCount !== undefined && viewerCount !== null) {
+        vText.innerText = Number(viewerCount).toLocaleString();
+      }
+      const latText = document.getElementById('latencyText');
+      const sseDot = document.getElementById('sseStatusDot');
+      if (latText) {
+        const modeLabel = sseConnected ? '⚡ SSE' : 'POLL';
+        const latStr = (avgLatencyMs !== undefined && avgLatencyMs !== null) ? `${Number(avgLatencyMs).toFixed(1)} ms` : '-- ms';
+        latText.innerText = `${modeLabel} • ${latStr}`;
+      }
+      if (sseDot) {
+        sseDot.className = sseConnected
+          ? 'w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse'
+          : 'w-1.5 h-1.5 rounded-full bg-amber-400';
+      }
+    }
+
+    function buildChatElement(c) {
+      const item = document.createElement('div');
+      item.className = "p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-start justify-between gap-2 text-xs transition";
+
+      if (c.event_type === 'gift') {
+        item.className += " border-amber-500/40 bg-amber-950/20";
+        const comboBadge = (c.gift_combo_total && Number(c.gift_combo_total) > 1)
+          ? ` <span class="text-amber-400 font-bold">x${escapeHtml(c.gift_combo_total)}</span>`
+          : '';
+        item.innerHTML = `
+          <div class="flex items-center space-x-2">
+            <span class="text-base">🎁</span>
+            <div>
+              <span class="font-bold text-amber-300">${escapeHtml(c.nickname)}</span>
+              <span class="text-slate-300"> menyawer Gift <strong>${escapeHtml(c.gift_name)}</strong>${comboBadge}</span>
+            </div>
+          </div>
+          <span class="font-extrabold text-emerald-400 shrink-0">+Rp ${Number(c.gift_value_idr || 0).toLocaleString()}</span>
+        `;
+      } else {
+        const tags = (Array.isArray(c.intent_tags) && c.intent_tags.length > 0)
+          ? c.intent_tags.slice(0, 2)
+          : [c.ml_intent || 'CASUAL'];
+
+        const tagPillsHtml = tags.map((tag) => {
+          let badgeColor = "bg-slate-700 text-slate-300";
+          let badgeText = "CASUAL";
+          if (tag === "INTENT_BUY") {
+            badgeColor = "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold";
+            badgeText = "🛍️ NIAT BELI";
+          } else if (tag === "QUESTION") {
+            badgeColor = "bg-blue-500/20 text-blue-400 border border-blue-500/30 font-semibold";
+            badgeText = "❓ TANYA";
+          } else if (tag === "COMPLAINT") {
+            badgeColor = "bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold";
+            badgeText = "⚠️ KOMPLAIN";
+          }
+          return `<span class="text-[10px] px-1.5 py-0.5 rounded ${badgeColor}">${badgeText}</span>`;
+        }).join(' ');
+
+        const etalaseBadge = c.extracted_etalase
+          ? `<span class="bg-pink-500/20 text-pink-300 px-1.5 py-0.5 rounded text-[10px] font-bold">#${escapeHtml(c.extracted_etalase)}</span>`
+          : '';
+
+        item.innerHTML = `
+          <div class="space-y-1 flex-1">
+            <div class="flex items-center flex-wrap gap-1.5">
+              <span class="font-bold text-white">${escapeHtml(c.nickname)}</span>
+              ${etalaseBadge}
+              ${tagPillsHtml}
+            </div>
+            <p class="text-slate-300">${escapeHtml(c.comment_text || '')}</p>
+          </div>
+        `;
+      }
+      return item;
+    }
+
+    function eventMatchesFilter(c, filterKey) {
+      if (!c) return false;
+      if (filterKey === 'ALL') return true;
+      if (filterKey === 'GIFT') return c.event_type === 'gift';
+      if (c.event_type === 'gift') return filterKey === 'IMPORTANT';
+      const tags = (Array.isArray(c.intent_tags) && c.intent_tags.length > 0)
+        ? c.intent_tags
+        : [c.ml_intent || 'CASUAL'];
+      if (filterKey === 'IMPORTANT') {
+        return tags.some(t => t === 'INTENT_BUY' || t === 'QUESTION' || t === 'COMPLAINT');
+      }
+      return tags.includes(filterKey);
+    }
+
+    function isBusinessImportant(c) {
+      return eventMatchesFilter(c, 'IMPORTANT');
+    }
+
+    function recordClientEvent(c) {
+      if (!c || !c.event_id || recordedEventIds.has(c.event_id)) return false;
+      recordedEventIds.add(c.event_id);
+      recentClientEvents.unshift(c);
+      if (recentClientEvents.length > 120) {
+        recentClientEvents.pop();
+      }
+      if (recordedEventIds.size > 1000) {
+        recordedEventIds = new Set(recentClientEvents.map(ev => ev.event_id));
+      }
+      return true;
+    }
+
+    function prependEventsToChatBox(events) {
+      const chatBox = document.getElementById('liveChatBox');
+      if (!chatBox || !events || events.length === 0) return;
+
+      if (chatBox.children.length === 1 && !chatBox.firstElementChild.dataset.eventRow) {
+        chatBox.innerHTML = '';
+      }
+
+      const fragment = document.createDocumentFragment();
+      for (let i = events.length - 1; i >= 0; i--) {
+        const c = events[i];
+        if (!c || !c.event_id || seenCommentIds.has(c.event_id)) continue;
+        seenCommentIds.add(c.event_id);
+        const el = buildChatElement(c);
+        el.dataset.eventRow = '1';
+        fragment.appendChild(el);
+      }
+
+      if (fragment.childNodes.length > 0) {
+        chatBox.insertBefore(fragment, chatBox.firstChild);
+        while (chatBox.children.length > 40) {
+          chatBox.removeChild(chatBox.lastChild);
+        }
+      }
+      if (seenCommentIds.size > 1000) {
+        const keep = Array.from(seenCommentIds).slice(-300);
+        seenCommentIds = new Set(keep);
+      }
+    }
+
+    function renderFilteredHistory() {
+      const chatBox = document.getElementById('liveChatBox');
+      if (!chatBox) return;
+      seenCommentIds.clear();
+      pendingChatQueue.length = 0;
+
+      const matching = recentClientEvents.filter(c => eventMatchesFilter(c, activeChatFilter)).slice(0, 35);
+      chatBox.innerHTML = '';
+      if (matching.length === 0) {
+        const label = activeChatFilter === 'ALL' ? 'Menunggu komentar penonton masuk...' : `Belum ada interaksi untuk filter "${activeChatFilter}".`;
+        chatBox.innerHTML = `<div class="text-xs text-slate-500 text-center py-8">${escapeHtml(label)}</div>`;
+        return;
+      }
+      prependEventsToChatBox(matching);
+    }
+
+    function enqueueIncomingEvents(events) {
+      if (!events || events.length === 0) return;
+      for (const c of events) {
+        const isNew = recordClientEvent(c);
+        if (!isNew && seenCommentIds.has(c.event_id)) continue;
+        if (!eventMatchesFilter(c, activeChatFilter)) continue;
+
+        if (chatSpeedMode === 'slow') {
+          if (!seenCommentIds.has(c.event_id)) {
+            slowModePool.push(c);
+            if (slowModePool.length > 60) {
+              slowModePool.shift();
+            }
+          }
+        } else {
+          pendingChatQueue.push(c);
+          if (pendingChatQueue.length > 120) {
+            pendingChatQueue.splice(0, pendingChatQueue.length - 120);
+          }
+        }
+      }
+
+      if (chatSpeedMode === 'slow') {
+        const chatBox = document.getElementById('liveChatBox');
+        const hasRows = chatBox && chatBox.firstElementChild && chatBox.firstElementChild.dataset.eventRow;
+        if (!hasRows && slowModePool.length > 0) {
+          const initialBatch = slowModePool.splice(-Math.min(5, slowModePool.length)).reverse();
+          prependEventsToChatBox(initialBatch);
+        }
+      } else if (pendingChatQueue.length > 0) {
+        scheduleChatFlush();
+      }
+    }
+
+    function flushChatQueue() {
+      chatFlushScheduled = false;
+      if (isChatPausedManual || chatSpeedMode === 'slow' || pendingChatQueue.length === 0) return;
+
+      const now = performance.now();
+      if (now - lastChatFlushTime < 80 && pendingChatQueue.length < 25) {
+        chatFlushScheduled = true;
+        requestAnimationFrame(flushChatQueue);
+        return;
+      }
+      lastChatFlushTime = now;
+
+      const batch = pendingChatQueue.splice(0, pendingChatQueue.length).filter(c => eventMatchesFilter(c, activeChatFilter));
+      prependEventsToChatBox(batch);
+    }
+
+    function scheduleChatFlush() {
+      if (!chatFlushScheduled && !isChatPausedManual && chatSpeedMode === 'normal') {
+        chatFlushScheduled = true;
+        requestAnimationFrame(flushChatQueue);
+      }
+    }
+
+    function runSlowModeTick() {
+      if (isChatPausedManual || chatSpeedMode !== 'slow' || slowModePool.length === 0) return;
+
+      // Ambil chat TERBARU yang cocok filter; bila filter=ALL, prioritaskan chat bernilai bisnis dulu
+      let chosenIdx = -1;
+      if (activeChatFilter === 'ALL') {
+        for (let i = slowModePool.length - 1; i >= 0; i--) {
+          if (!seenCommentIds.has(slowModePool[i].event_id) && isBusinessImportant(slowModePool[i])) {
+            chosenIdx = i;
+            break;
+          }
+        }
+      }
+      if (chosenIdx === -1) {
+        for (let i = slowModePool.length - 1; i >= 0; i--) {
+          if (!seenCommentIds.has(slowModePool[i].event_id) && eventMatchesFilter(slowModePool[i], activeChatFilter)) {
+            chosenIdx = i;
+            break;
+          }
+        }
+      }
+
+      if (chosenIdx !== -1) {
+        const [chosen] = slowModePool.splice(chosenIdx, 1);
+        prependEventsToChatBox([chosen]);
+      }
+      // Buang sisa antrean usang di bawah 20 agar tetap segar
+      if (slowModePool.length > 20) {
+        slowModePool.splice(0, slowModePool.length - 20);
+      }
+    }
+
+    function startSlowModeTimer() {
+      stopSlowModeTimer();
+      slowModeTimer = setInterval(runSlowModeTick, slowIntervalMs);
+    }
+
+    function stopSlowModeTimer() {
+      if (slowModeTimer) {
+        clearInterval(slowModeTimer);
+        slowModeTimer = null;
+      }
+    }
+
+    function setChatSpeedMode(mode) {
+      chatSpeedMode = (mode === 'slow') ? 'slow' : 'normal';
+      const btnN = document.getElementById('btnModeNormal');
+      const btnS = document.getElementById('btnModeSlow');
+      const sel = document.getElementById('slowSpeedSelect');
+      const chatLabel = document.getElementById('chatSourceLabel');
+
+      if (chatSpeedMode === 'slow') {
+        btnN.className = "px-2.5 py-1 rounded-md font-medium text-slate-400 hover:text-white transition";
+        btnS.className = "px-2.5 py-1 rounded-md font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 transition";
+        if (sel) sel.classList.remove('hidden');
+        if (chatLabel) chatLabel.innerText = `🐢 Mode Lambat (${slowIntervalMs / 1000}s)`;
+        slowModePool.length = 0;
+        pendingChatQueue.length = 0;
+        startSlowModeTimer();
+      } else {
+        btnN.className = "px-2.5 py-1 rounded-md font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 transition";
+        btnS.className = "px-2.5 py-1 rounded-md font-medium text-slate-400 hover:text-white transition";
+        if (sel) sel.classList.add('hidden');
+        if (chatLabel) chatLabel.innerText = "⚡ Live Real-Time";
+        stopSlowModeTimer();
+        renderFilteredHistory();
+      }
+    }
+
+    function setSlowInterval(msVal) {
+      slowIntervalMs = parseInt(msVal, 10) || 3000;
+      if (chatSpeedMode === 'slow') {
+        const chatLabel = document.getElementById('chatSourceLabel');
+        if (chatLabel) chatLabel.innerText = `🐢 Mode Lambat (${slowIntervalMs / 1000}s)`;
+        startSlowModeTimer();
+      }
+    }
+
+    function setChatFilter(filterKey) {
+      activeChatFilter = filterKey || 'ALL';
+      document.querySelectorAll('.chat-filter-btn').forEach((btn) => {
+        const isActive = btn.dataset.chatFilter === activeChatFilter;
+        btn.className = isActive
+          ? "chat-filter-btn px-2.5 py-1 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/40 font-semibold shrink-0 transition"
+          : "chat-filter-btn px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700 hover:border-slate-500 shrink-0 transition";
+      });
+      slowModePool.length = 0;
+      renderFilteredHistory();
+    }
+
+    function toggleChatPause() {
+      isChatPausedManual = !isChatPausedManual;
+      const btn = document.getElementById('btnChatPause');
+      if (btn) {
+        if (isChatPausedManual) {
+          btn.innerText = '▶️ Lanjut';
+          btn.className = "text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full font-semibold transition";
+        } else {
+          btn.innerText = '⏸️ Jeda';
+          btn.className = "text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-2 py-0.5 rounded-full font-semibold transition";
+          if (chatSpeedMode === 'normal' && pendingChatQueue.length > 0) {
+            scheduleChatFlush();
+          }
+        }
+      }
+    }
+
+    function scheduleSummaryFlush(summaryPayload) {
+      pendingSummaryPayload = summaryPayload;
+      const now = performance.now();
+      if (now - lastSummaryFlushTime >= 300) {
+        lastSummaryFlushTime = now;
+        const p = pendingSummaryPayload;
+        pendingSummaryPayload = null;
+        renderSummaryPayload(p);
+        return;
+      }
+      if (!summaryFlushTimer) {
+        summaryFlushTimer = setTimeout(() => {
+          summaryFlushTimer = null;
+          lastSummaryFlushTime = performance.now();
+          if (pendingSummaryPayload) {
+            const p = pendingSummaryPayload;
+            pendingSummaryPayload = null;
+            renderSummaryPayload(p);
+          }
+        }, 300);
+      }
+    }
+
+    function updatePinnedBanner(pinnedProd) {
+      const banner = document.getElementById('pinnedProductBanner');
+      const titleEl = document.getElementById('pinnedProductTitle');
+      const priceEl = document.getElementById('pinnedProductPrice');
+      if (!banner || !titleEl || !priceEl) return;
+
+      if (pinnedProd && pinnedProd.product_name) {
+        titleEl.innerText = `#${pinnedProd.etalase_no} ${pinnedProd.product_name}`;
+        priceEl.innerText = pinnedProd.price_idr > 0
+          ? `Rp ${Number(pinnedProd.price_idr).toLocaleString()}`
+          : 'Harga dari Live';
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
+    function connectSSE() {
+      if (sseSource) {
+        try { sseSource.close(); } catch (e) {}
+      }
+      sseSource = new EventSource('/api/v1/live/stream');
+
+      sseSource.onopen = () => {
+        sseConnected = true;
+        updateTelemetryBadges(undefined, undefined);
+      };
+
+      sseSource.onerror = () => {
+        sseConnected = false;
+        updateTelemetryBadges(undefined, undefined);
+      };
+
+      sseSource.addEventListener('session_state', (e) => {
+        try {
+          const payload = JSON.parse(e.data);
+          currentActiveSessionId = payload.session_id || currentActiveSessionId;
+          if (payload.stream_mode) currentStreamMode = payload.stream_mode;
+          if (payload.summary) {
+            renderSummaryPayload({ data: { ...payload.summary, streamer: payload.streamer, stream_mode: payload.stream_mode, is_real_live: payload.is_real_live }, stream_mode: payload.stream_mode, is_real_live: payload.is_real_live, avg_latency_ms: payload.avg_latency_ms, viewer_count: payload.summary.viewer_count });
+          }
+          refreshSecondaryTables();
+        } catch (err) {}
+      });
+
+      sseSource.addEventListener('live_event', (e) => {
+        try {
+          const payload = JSON.parse(e.data);
+          if (payload.session_id && currentActiveSessionId && payload.session_id !== currentActiveSessionId) return;
+          if (payload.stream_mode) currentStreamMode = payload.stream_mode;
+          if (payload.summary) {
+            scheduleSummaryFlush({
+              data: { ...payload.summary, streamer: payload.streamer, stream_mode: payload.stream_mode },
+              stream_mode: payload.stream_mode,
+              avg_latency_ms: payload.avg_latency_ms,
+              viewer_count: payload.summary.viewer_count
+            });
+          }
+          if (payload.event) {
+            enqueueIncomingEvents([payload.event]);
+          }
+          const now = Date.now();
+          if (now - lastSecondaryRefreshTime > 1200) {
+            lastSecondaryRefreshTime = now;
+            refreshSecondaryTables();
+          }
+        } catch (err) {}
+      });
+
+      sseSource.addEventListener('product_pin', (e) => {
+        try {
+          const payload = JSON.parse(e.data);
+          if (payload.session_id && currentActiveSessionId && payload.session_id !== currentActiveSessionId) return;
+          if (payload.pinned_product) {
+            updatePinnedBanner(payload.pinned_product);
+          }
+          refreshSecondaryTables();
+        } catch (err) {}
+      });
+
+      sseSource.addEventListener('room_stats', (e) => {
+        try {
+          const payload = JSON.parse(e.data);
+          if (payload.session_id && currentActiveSessionId && payload.session_id !== currentActiveSessionId) return;
+          updateTelemetryBadges(payload.viewer_count, undefined);
+        } catch (err) {}
+      });
+
+      sseSource.addEventListener('catalog_updated', () => {
+        refreshData();
+      });
+    }
 
     function initCharts() {
       // 1. Sentiment Donut Chart
@@ -464,6 +977,36 @@
       }
     }
 
+    async function disconnectLive() {
+      const btn = document.getElementById('btnDisconnect');
+      if (btn) btn.disabled = true;
+      try {
+        const resp = await fetch('/api/v1/session/disconnect', {
+          method: 'POST',
+          headers: { 'X-User-Role': 'viewer' }
+        });
+        if (resp.ok) {
+          const resJson = await resp.json();
+          pendingChatQueue.length = 0;
+          slowModePool.length = 0;
+          currentStreamMode = 'OFFLINE';
+
+          // Reset tombol simulasi ke OFF
+          document.getElementById('simText').innerText = 'Simulasi: OFF';
+          document.getElementById('btnSimDemo').className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs transition";
+
+          const toast = document.getElementById('statusToast');
+          document.getElementById('toastMessage').innerText = resJson.message;
+          toast.classList.remove('hidden');
+          await refreshData();
+        }
+      } catch (e) {
+        console.warn('Gagal memutus koneksi live:', e);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
     function quickSelectStore(username, niche = '') {
       document.getElementById('targetUsername').value = username.replace('@', '');
       document.getElementById('nicheOverride').value = niche;
@@ -518,8 +1061,14 @@
           }
 
           // Bersihkan chat feed dan reset memori komentar
-          document.getElementById('liveChatBox').innerHTML = '<div class="text-xs text-slate-500 text-center py-4">Memulai pemantauan toko ' + resJson.streamer + '...</div>';
+          document.getElementById('liveChatBox').innerHTML = '<div class="text-xs text-slate-500 text-center py-4">Memulai pemantauan toko ' + escapeHtml(resJson.streamer) + '...</div>';
           seenCommentIds.clear();
+          recordedEventIds.clear();
+          recentClientEvents.length = 0;
+          slowModePool.length = 0;
+          pendingChatQueue.length = 0;
+          currentStreamMode = resJson.stream_mode || 'OFFLINE';
+          updatePinnedBanner(null);
 
           // Reset sementara chart dan tabel
           if (demandChartInstance) {
@@ -550,277 +1099,295 @@
       }
     }
 
-    async function refreshData() {
-      try {
-        // 1. Fetch Summary
-        const resSum = await fetch('/api/v1/live/summary', {
-          headers: { 'X-User-Role': 'viewer' }
-        });
-        if (resSum.ok) {
-          const jsonSum = await resSum.json();
-          if (jsonSum.data) {
-            const d = jsonSum.data;
-            document.getElementById('totalComments').innerText = (d.total_comments || 0).toLocaleString();
-            document.getElementById('totalGift').innerText = 'Rp ' + (d.total_gift_revenue_idr || 0).toLocaleString();
-            document.getElementById('intentBuyCount').innerText = (d.purchase_intent_count || 0).toLocaleString();
+    function renderSummaryPayload(jsonSum) {
+      if (!jsonSum || !jsonSum.data) return;
+      const d = jsonSum.data;
+      document.getElementById('totalComments').innerText = (d.total_comments || 0).toLocaleString();
+      document.getElementById('totalGift').innerText = 'Rp ' + (d.total_gift_revenue_idr || 0).toLocaleString();
+      document.getElementById('intentBuyCount').innerText = (d.purchase_intent_count || 0).toLocaleString();
 
-            if (d.streamer) {
-              document.getElementById('activeStoreBadge').innerText = `Aktif: ${d.streamer}`;
-              if (document.activeElement !== document.getElementById('targetUsername')) {
-                document.getElementById('targetUsername').value = d.streamer.replace('@', '');
-              }
-            }
-            if (d.session_id) {
-              currentActiveSessionId = d.session_id;
-            }
-            if (d.niche) {
-              document.getElementById('nicheBadge').innerText = d.niche.toUpperCase();
-            }
-
-            // Update Stream Mode Badge (Real-Time Scraping vs Offline vs Demo)
-            const mode = jsonSum.stream_mode || (d && d.stream_mode) || (jsonSum.is_real_live ? 'REALTIME_TIKTOK_LIVE' : 'OFFLINE');
-            const isReal = (mode === 'REALTIME_TIKTOK_LIVE');
-            const isSim = (mode === 'SIMULATION_FALLBACK');
-            const isOffline = (mode === 'OFFLINE');
-
-            const modeBadge = document.getElementById('streamModeBadge');
-            const modeDot = document.getElementById('modeDot');
-            const modeText = document.getElementById('modeText');
-            const chatLabel = document.getElementById('chatSourceLabel');
-
-            if (modeBadge && modeDot && modeText) {
-              if (isReal) {
-                modeBadge.className = "text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-2.5 py-0.5 rounded-full border border-emerald-500/30 flex items-center space-x-1.5 shadow-sm shadow-emerald-500/20";
-                modeDot.className = "w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping";
-                modeText.innerText = "🟢 REAL-TIME TIKTOK LIVE";
-                if (chatLabel) chatLabel.innerText = "Live Penonton Asli TikTok";
-              } else if (isSim) {
-                modeBadge.className = "text-[10px] bg-amber-500/20 text-amber-300 font-bold px-2.5 py-0.5 rounded-full border border-amber-500/30 flex items-center space-x-1.5";
-                modeDot.className = "w-1.5 h-1.5 rounded-full bg-amber-400";
-                modeText.innerText = "🟡 MODE SIMULASI DEMO";
-                if (chatLabel) chatLabel.innerText = "Simulasi Demo Niche";
-              } else {
-                modeBadge.className = "text-[10px] bg-rose-500/20 text-rose-300 font-bold px-2.5 py-0.5 rounded-full border border-rose-500/30 flex items-center space-x-1.5";
-                modeDot.className = "w-1.5 h-1.5 rounded-full bg-rose-500";
-                modeText.innerText = "🔴 TOKO SEDANG TIDAK LIVE";
-                if (chatLabel) chatLabel.innerText = "Status: Toko Offline";
-              }
-            }
-
-            const buy = d.purchase_intent_count || 0;
-            const q = d.question_count || 0;
-            const c = d.complaint_count || 0;
-            const total = buy + q + c;
-
-            if (sentimentChartInstance) {
-              sentimentChartInstance.data.datasets[0].data = total > 0 ? [buy, q, c] : [1, 0, 0];
-              sentimentChartInstance.update();
-
-              document.getElementById('pctBuy').innerText = total > 0 ? Math.round((buy / total) * 100) + '%' : '0%';
-              document.getElementById('pctQuest').innerText = total > 0 ? Math.round((q / total) * 100) + '%' : '0%';
-              document.getElementById('pctComp').innerText = total > 0 ? Math.round((c / total) * 100) + '%' : '0%';
-            }
-          }
+      if (d.streamer) {
+        document.getElementById('activeStoreBadge').innerText = `Aktif: ${d.streamer}`;
+        if (document.activeElement !== document.getElementById('targetUsername')) {
+          document.getElementById('targetUsername').value = d.streamer.replace('@', '');
         }
+      }
+      if (d.session_id) {
+        currentActiveSessionId = d.session_id;
+      }
+      if (d.niche) {
+        document.getElementById('nicheBadge').innerText = d.niche.toUpperCase();
+      }
 
-        // 2. Fetch Live Comments Waterfall Feed
-        const resComments = await fetch('/api/v1/live/comments', {
-          headers: { 'X-User-Role': 'viewer' }
-        });
-        if (resComments.ok) {
-          const jsonComments = await resComments.json();
-          if (jsonComments.session_id && currentActiveSessionId && jsonComments.session_id !== currentActiveSessionId) {
-            return;
-          }
-          const comments = jsonComments.comments || [];
-          const chatBox = document.getElementById('liveChatBox');
+      const mode = jsonSum.stream_mode || (d && d.stream_mode) || (jsonSum.is_real_live ? 'REALTIME_TIKTOK_LIVE' : 'OFFLINE');
+      currentStreamMode = mode;
+      const isReal = (mode === 'REALTIME_TIKTOK_LIVE');
+      const isSim = (mode === 'SIMULATION_FALLBACK');
 
-          if (comments.length > 0) {
-            comments.slice().reverse().forEach(c => {
-              if (!seenCommentIds.has(c.event_id)) {
-                seenCommentIds.add(c.event_id);
+      updateTelemetryBadges(
+        jsonSum.viewer_count !== undefined ? jsonSum.viewer_count : d.viewer_count,
+        jsonSum.avg_latency_ms !== undefined ? jsonSum.avg_latency_ms : d.avg_latency_ms
+      );
 
-                const item = document.createElement('div');
-                item.className = "p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-start justify-between gap-2 text-xs transition animate-fade-in";
+      const modeBadge = document.getElementById('streamModeBadge');
+      const modeDot = document.getElementById('modeDot');
+      const modeText = document.getElementById('modeText');
+      const chatLabel = document.getElementById('chatSourceLabel');
 
-                if (c.event_type === 'gift') {
-                  item.className += " border-amber-500/40 bg-amber-950/20";
-                  item.innerHTML = `
-                    <div class="flex items-center space-x-2">
-                      <span class="text-base">🎁</span>
-                      <div>
-                        <span class="font-bold text-amber-300">${c.nickname}</span>
-                        <span class="text-slate-300"> menyawer Gift <strong>${c.gift_name}</strong></span>
-                      </div>
-                    </div>
-                    <span class="font-extrabold text-emerald-400 shrink-0">+Rp ${Number(c.gift_value_idr || 5000).toLocaleString()}</span>
-                  `;
-                } else {
-                  let badgeColor = "bg-slate-700 text-slate-300";
-                  let badgeText = "CASUAL";
-                  if (c.ml_intent === "INTENT_BUY") {
-                    badgeColor = "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold";
-                    badgeText = "🛍️ NIAT BELI";
-                  } else if (c.ml_intent === "QUESTION") {
-                    badgeColor = "bg-blue-500/20 text-blue-400 border border-blue-500/30";
-                    badgeText = "❓ TANYA";
-                  } else if (c.ml_intent === "COMPLAINT") {
-                    badgeColor = "bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold";
-                    badgeText = "⚠️ KOMPLAIN";
-                  }
-
-                  let etalaseBadge = c.extracted_etalase 
-                    ? `<span class="bg-pink-500/20 text-pink-300 px-1.5 py-0.5 rounded text-[10px] font-bold">#${c.extracted_etalase}</span>`
-                    : '';
-
-                  item.innerHTML = `
-                    <div class="space-y-1 flex-1">
-                      <div class="flex items-center space-x-2">
-                        <span class="font-bold text-white">${c.nickname}</span>
-                        ${etalaseBadge}
-                        <span class="text-[10px] px-1.5 py-0.5 rounded ${badgeColor}">${badgeText}</span>
-                      </div>
-                      <p class="text-slate-300">${c.comment_text || ''}</p>
-                    </div>
-                  `;
-                }
-
-                // Masukkan komentar ke paling atas
-                chatBox.insertBefore(item, chatBox.firstChild);
-
-                // Batasi maksimal 30 komentar di tampilan
-                while (chatBox.children.length > 30) {
-                  chatBox.removeChild(chatBox.lastChild);
-                }
-              }
-            });
-          } else {
-            // Tampilan saat belum ada komentar / Toko sedang tidak live
-            const isOffline = (!jsonComments.is_real_live && !jsonComments.is_simulation_enabled);
-            if (isOffline) {
-              chatBox.innerHTML = `
-                <div class="flex flex-col items-center justify-center py-8 px-4 text-center space-y-2.5 border border-dashed border-rose-500/30 bg-rose-950/20 rounded-2xl">
-                  <div class="w-10 h-10 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-lg">
-                    🔴
-                  </div>
-                  <div>
-                    <h4 class="text-xs font-bold text-white uppercase tracking-wider">Toko Sedang Tidak Live</h4>
-                    <p class="text-xs text-slate-300 mt-1">Akun <strong class="text-pink-400">${jsonComments.streamer || 'ini'}</strong> saat ini sedang tidak siaran di TikTok.</p>
-                  </div>
-                  <div class="text-[11px] text-slate-400 bg-slate-800/90 px-3 py-1 rounded-lg border border-slate-700">
-                    Menunggu siaran langsung dimulai...
-                  </div>
-                  <p class="text-[10px] text-slate-400">
-                    Ingin melihat data live nyata? Coba toko: <button onclick="quickSelectStore('@somethincofficial')" class="text-cyan-400 hover:text-cyan-300 underline font-bold">@somethincofficial</button>
-                  </p>
-                </div>
-              `;
-            } else {
-              chatBox.innerHTML = '<div class="text-xs text-slate-500 text-center py-8">Menunggu komentar penonton masuk...</div>';
-            }
-          }
+      const btnDisconnect = document.getElementById('btnDisconnect');
+      if (btnDisconnect) {
+        if (isReal || isSim) {
+          btnDisconnect.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/35 border border-rose-500/40 text-rose-300 text-xs font-semibold transition cursor-pointer";
+        } else {
+          btnDisconnect.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-500 text-xs font-medium transition";
         }
+      }
 
-        // 3. Fetch Product Demand (Table + Bar Chart)
-        const resProd = await fetch('/api/v1/products/demand?limit=5', {
-          headers: { 'X-User-Role': 'viewer' }
-        });
-        if (resProd.ok) {
-          const jsonProd = await resProd.json();
-          if (jsonProd.session_id && currentActiveSessionId && jsonProd.session_id !== currentActiveSessionId) {
-            return;
-          }
-          const rows = jsonProd.leaderboard || [];
-          const tbody = document.getElementById('productTableBody');
-
-          if (rows.length > 0) {
-            tbody.innerHTML = '';
-            rows.forEach((p) => {
-              const tr = document.createElement('tr');
-              tr.className = 'hover:bg-slate-800/40 transition border-b border-slate-800/40';
-              tr.innerHTML = `
-                <td class="py-3 px-2 font-bold text-pink-400">#${p.etalase_no}</td>
-                <td class="py-3 px-2 font-medium text-white">${p.product_name}</td>
-                <td class="py-3 px-2 text-right text-slate-300">Rp ${Number(p.price_idr).toLocaleString()}</td>
-                <td class="py-3 px-2 text-center font-bold text-amber-400">${p.request_count}x</td>
-                <td class="py-3 px-2 text-center text-emerald-400 font-semibold">${p.high_intent_count}</td>
-              `;
-              tbody.appendChild(tr);
-            });
-
-            // Update Bar Chart
-            if (demandChartInstance) {
-              demandChartInstance.data.labels = rows.map(r => `#${r.etalase_no} ${r.product_name.length > 15 ? r.product_name.slice(0, 15) + '..' : r.product_name}`);
-              demandChartInstance.data.datasets[0].data = rows.map(r => r.request_count);
-              demandChartInstance.data.datasets[1].data = rows.map(r => r.high_intent_count);
-              demandChartInstance.update();
-            }
-
-            // Update Copilot Advice
-            const topProd = rows[0];
-            const isOffline = (!jsonProd.is_real_live && !jsonProd.is_simulation_enabled);
-            if (isOffline && rows.every(r => (r.request_count || 0) === 0)) {
-              document.getElementById('topEtalaseBadge').innerText = 'Status Siaran';
-              document.getElementById('topEtalaseName').innerText = 'Toko Sedang Offline';
-              document.getElementById('copilotAdvice').innerHTML = `
-                🔴 <strong>Toko sedang tidak live.</strong> Sistem TikPulse dalam posisi standby memantau siaran <strong>${jsonProd.streamer || ''}</strong>. 
-                Rekomendasi etalase akan otomatis memprioritaskan produk paling diminati seketika siaran langsung dimulai.
-              `;
-            } else if (topProd && topProd.request_count > 0) {
-              document.getElementById('topEtalaseBadge').innerText = `Etalase #${topProd.etalase_no}`;
-              document.getElementById('topEtalaseName').innerText = topProd.product_name;
-              document.getElementById('copilotAdvice').innerHTML = `
-                Host disarankan segera mempromosikan <strong>Etalase #${topProd.etalase_no} (${topProd.product_name})</strong>! 
-                Produk ini sedang mendominasi dengan <strong>${topProd.request_count} permintaan</strong> dan ${topProd.high_intent_count} calon pembeli siap checkout.
-              `;
-            } else {
-              document.getElementById('topEtalaseBadge').innerText = 'Katalog Siap';
-              document.getElementById('topEtalaseName').innerText = topProd ? topProd.product_name : 'Menunggu Siaran';
-              document.getElementById('copilotAdvice').innerHTML = `
-                Katalog produk toko telah tersinkronisasi. Rekomendasi promosi akan muncul otomatis setelah ada komentar penonton di siaran live.
-              `;
-            }
-          }
+      if (modeBadge && modeDot && modeText) {
+        if (isReal) {
+          modeBadge.className = "text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-2.5 py-0.5 rounded-full border border-emerald-500/30 flex items-center space-x-1.5 shadow-sm shadow-emerald-500/20";
+          modeDot.className = "w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping";
+          modeText.innerText = "🟢 REAL-TIME TIKTOK LIVE";
+          if (chatLabel) chatLabel.innerText = chatSpeedMode === 'slow' ? `🐢 Mode Lambat (${slowIntervalMs / 1000}s)` : "Live Penonton Asli TikTok";
+        } else if (isSim) {
+          modeBadge.className = "text-[10px] bg-amber-500/20 text-amber-300 font-bold px-2.5 py-0.5 rounded-full border border-amber-500/30 flex items-center space-x-1.5";
+          modeDot.className = "w-1.5 h-1.5 rounded-full bg-amber-400";
+          modeText.innerText = "🟡 MODE SIMULASI DEMO";
+          if (chatLabel) chatLabel.innerText = chatSpeedMode === 'slow' ? `🐢 Mode Lambat (${slowIntervalMs / 1000}s)` : "Simulasi Demo Niche";
+        } else {
+          modeBadge.className = "text-[10px] bg-rose-500/20 text-rose-300 font-bold px-2.5 py-0.5 rounded-full border border-rose-500/30 flex items-center space-x-1.5";
+          modeDot.className = "w-1.5 h-1.5 rounded-full bg-rose-500";
+          modeText.innerText = "🔴 TOKO SEDANG TIDAK LIVE";
+          if (chatLabel) chatLabel.innerText = "Status: Toko Offline";
         }
+      }
 
-        // 4. Fetch Top Gifters
-        const resGifts = await fetch('/api/v1/gifters/leaderboard?limit=3', {
-          headers: { 'X-User-Role': 'viewer' }
-        });
-        if (resGifts.ok) {
-          const jsonGifts = await resGifts.json();
-          const sultans = jsonGifts.top_sultans || [];
-          const divGifts = document.getElementById('giftersList');
+      const buy = d.purchase_intent_count || 0;
+      const q = d.question_count || 0;
+      const c = d.complaint_count || 0;
+      const total = buy + q + c;
 
-          if (sultans.length > 0) {
-            divGifts.innerHTML = '';
-            sultans.forEach((s, idx) => {
-              const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉';
-              const item = document.createElement('div');
-              item.className = 'flex items-center justify-between p-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50';
-              item.innerHTML = `
-                <div class="flex items-center space-x-2.5">
-                  <span class="text-base">${medal}</span>
-                  <div>
-                    <h4 class="text-xs font-bold text-white">${s.nickname}</h4>
-                    <span class="text-[10px] text-slate-400">${s.gift_count} kali sawer</span>
-                  </div>
-                </div>
-                <span class="text-xs font-extrabold text-emerald-400">Rp ${Number(s.total_gift_idr).toLocaleString()}</span>
-              `;
-              divGifts.appendChild(item);
-            });
-          } else {
-            divGifts.innerHTML = `
-              <div class="p-5 text-center text-xs text-slate-400 bg-slate-800/30 rounded-xl border border-slate-700/40">
-                <span>🎁 Belum ada saweran gift di sesi live ini.</span>
+      if (sentimentChartInstance) {
+        sentimentChartInstance.data.datasets[0].data = total > 0 ? [buy, q, c] : [1, 0, 0];
+        sentimentChartInstance.update('none');
+
+        document.getElementById('pctBuy').innerText = total > 0 ? Math.round((buy / total) * 100) + '%' : '0%';
+        document.getElementById('pctQuest').innerText = total > 0 ? Math.round((q / total) * 100) + '%' : '0%';
+        document.getElementById('pctComp').innerText = total > 0 ? Math.round((c / total) * 100) + '%' : '0%';
+      }
+    }
+
+    function renderCommentsPayload(jsonComments) {
+      if (!jsonComments) return;
+      if (jsonComments.session_id && currentActiveSessionId && jsonComments.session_id !== currentActiveSessionId) {
+        return;
+      }
+      const comments = jsonComments.comments || [];
+      const chatBox = document.getElementById('liveChatBox');
+
+      if (comments.length > 0) {
+        const reversed = comments.slice().reverse();
+        enqueueIncomingEvents(reversed);
+      } else {
+        const isOffline = (!jsonComments.is_real_live && !jsonComments.is_simulation_enabled);
+        if (isOffline) {
+          chatBox.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-8 px-4 text-center space-y-2.5 border border-dashed border-rose-500/30 bg-rose-950/20 rounded-2xl">
+              <div class="w-10 h-10 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-lg">
+                🔴
               </div>
-            `;
-          }
+              <div>
+                <h4 class="text-xs font-bold text-white uppercase tracking-wider">Toko Sedang Tidak Live</h4>
+                <p class="text-xs text-slate-300 mt-1">Akun <strong class="text-pink-400">${escapeHtml(jsonComments.streamer || 'ini')}</strong> saat ini sedang tidak siaran di TikTok.</p>
+              </div>
+              <div class="text-[11px] text-slate-400 bg-slate-800/90 px-3 py-1 rounded-lg border border-slate-700">
+                Menunggu siaran langsung dimulai...
+              </div>
+              <p class="text-[10px] text-slate-400">
+                Atau nyalakan tombol <strong>Simulasi</strong> di kanan atas untuk demo offline.
+              </p>
+            </div>
+          `;
+        } else {
+          chatBox.innerHTML = '<div class="text-xs text-slate-500 text-center py-8">Menunggu komentar penonton masuk...</div>';
+        }
+      }
+    }
+
+    function renderSourceBadge(source, isPinned) {
+      let pills = '';
+      if (isPinned) {
+        pills += '<span class="ml-1.5 text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">📌 DI-PIN</span>';
+      }
+      if (source === 'TIKTOK_LIVE_PIN') {
+        pills += '<span class="ml-1.5 text-[9px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-semibold">🟢 LIVE PIN</span>';
+      } else if (source === 'CUSTOM_CATALOG') {
+        pills += '<span class="ml-1.5 text-[9px] bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 px-1.5 py-0.5 rounded font-semibold">✏️ KUSTOM</span>';
+      } else if (source === 'CHAT_DETECTED') {
+        pills += '<span class="ml-1.5 text-[9px] bg-amber-500/15 text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded font-semibold">💬 DARI CHAT</span>';
+      } else if (source === 'SIMULATION_CATALOG') {
+        pills += '<span class="ml-1.5 text-[9px] bg-slate-700/70 text-slate-300 border border-slate-600 px-1.5 py-0.5 rounded font-semibold">🟡 DEMO</span>';
+      }
+      return pills;
+    }
+
+    function renderProductsPayload(jsonProd) {
+      if (!jsonProd) return;
+      if (jsonProd.session_id && currentActiveSessionId && jsonProd.session_id !== currentActiveSessionId) {
+        return;
+      }
+      updatePinnedBanner(jsonProd.pinned_product || null);
+
+      const rows = jsonProd.leaderboard || [];
+      const tbody = document.getElementById('productTableBody');
+      const isReal = (jsonProd.stream_mode === 'REALTIME_TIKTOK_LIVE');
+      const isOffline = (!jsonProd.is_real_live && !jsonProd.is_simulation_enabled);
+
+      if (rows.length > 0) {
+        tbody.innerHTML = '';
+        rows.forEach((p) => {
+          const tr = document.createElement('tr');
+          tr.className = p.is_pinned
+            ? 'bg-emerald-950/25 hover:bg-emerald-950/40 transition border-b border-emerald-500/20'
+            : 'hover:bg-slate-800/40 transition border-b border-slate-800/40';
+          const priceHtml = (Number(p.price_idr) > 0)
+            ? `Rp ${Number(p.price_idr).toLocaleString()}`
+            : '<span class="text-slate-500 italic text-xs">Menunggu pin</span>';
+          const badgeHtml = renderSourceBadge(p.source, p.is_pinned);
+          tr.innerHTML = `
+            <td class="py-3 px-2 font-bold text-pink-400">#${escapeHtml(p.etalase_no)}</td>
+            <td class="py-3 px-2 font-medium text-white">${escapeHtml(p.product_name)}${badgeHtml}</td>
+            <td class="py-3 px-2 text-right text-slate-300">${priceHtml}</td>
+            <td class="py-3 px-2 text-center font-bold text-amber-400">${p.request_count}x</td>
+            <td class="py-3 px-2 text-center text-emerald-400 font-semibold">${p.high_intent_count}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        if (demandChartInstance) {
+          demandChartInstance.data.labels = rows.map(r => `#${r.etalase_no} ${r.product_name.length > 15 ? r.product_name.slice(0, 15) + '..' : r.product_name}`);
+          demandChartInstance.data.datasets[0].data = rows.map(r => r.request_count);
+          demandChartInstance.data.datasets[1].data = rows.map(r => r.high_intent_count);
+          demandChartInstance.update('none');
         }
 
+        const topProd = rows[0];
+        if (isOffline && rows.every(r => (r.request_count || 0) === 0)) {
+          document.getElementById('topEtalaseBadge').innerText = 'Status Siaran';
+          document.getElementById('topEtalaseName').innerText = 'Toko Sedang Offline';
+          document.getElementById('copilotAdvice').innerHTML = `
+            🔴 <strong>Toko sedang tidak live.</strong> Sistem TikPulse dalam posisi standby memantau siaran <strong>${escapeHtml(jsonProd.streamer || '')}</strong>.
+          `;
+        } else if (topProd && topProd.request_count > 0) {
+          document.getElementById('topEtalaseBadge').innerText = `Etalase #${topProd.etalase_no}`;
+          document.getElementById('topEtalaseName').innerText = topProd.product_name;
+          document.getElementById('copilotAdvice').innerHTML = `
+            Host disarankan segera mempromosikan <strong>Etalase #${escapeHtml(topProd.etalase_no)} (${escapeHtml(topProd.product_name)})</strong>! 
+            Produk ini sedang mendominasi dengan <strong>${topProd.request_count} permintaan</strong> dan ${topProd.high_intent_count} calon pembeli siap checkout.
+          `;
+        } else {
+          document.getElementById('topEtalaseBadge').innerText = jsonProd.pinned_product ? `Etalase #${jsonProd.pinned_product.etalase_no}` : 'Live Terhubung';
+          document.getElementById('topEtalaseName').innerText = topProd ? topProd.product_name : 'Menunggu Siaran';
+          document.getElementById('copilotAdvice').innerHTML = `
+            Etalase live tersinkronisasi (${rows.length} produk terpantau). Rekomendasi prioritas akan otomatis naik saat komentar penonton masuk.
+          `;
+        }
+      } else {
+        if (demandChartInstance) {
+          demandChartInstance.data.labels = [];
+          demandChartInstance.data.datasets[0].data = [];
+          demandChartInstance.data.datasets[1].data = [];
+          demandChartInstance.update('none');
+        }
+        if (isReal) {
+          const detailNote = jsonProd.commerce_restricted
+            ? `TikTok mendeteksi toko ini memiliki Keranjang Kuning (<code>has_commerce_goods=true</code>), namun membatasi daftar produk hanya untuk aplikasi HP (<code>commerce_permission=0</code> pada jalur Web). Nomor etalase yang disebut penonton di chat (mis. <em>"13 ks"</em>, <em>"etalase 5"</em>) tetap tercatat otomatis, atau klik <strong>"Sesuaikan Nama Etalase" → Tempel Cepat</strong>.`
+            : `Etalase akan terisi otomatis saat host menyematkan (pin) produk di TikTok Live atau penonton menyebut nomor etalase — atau klik <strong>"Sesuaikan Nama Etalase"</strong> untuk menempel daftar etalase toko ini.`;
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="5" class="py-6 px-4 text-center text-xs text-emerald-300/90 bg-emerald-950/15 rounded-xl">
+                🟢 <strong>Terhubung ke siaran asli ${escapeHtml(jsonProd.streamer || '')}!</strong><br/>
+                <span class="text-slate-400">${detailNote}</span>
+              </td>
+            </tr>
+          `;
+          document.getElementById('topEtalaseBadge').innerText = 'Menunggu Pin/Chat';
+          document.getElementById('topEtalaseName').innerText = 'Belum ada produk di-pin host';
+          document.getElementById('copilotAdvice').innerHTML = `
+            🟢 Siaran asli <strong>${escapeHtml(jsonProd.streamer || '')}</strong> aktif! Menunggu host mem-pin produk etalase atau penonton menyebut nomor etalase di live chat.
+          `;
+        } else {
+          tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-xs text-slate-500">Belum ada katalog atau data permintaan untuk toko offline ini.</td></tr>';
+        }
+      }
+    }
+
+    function renderGiftersPayload(jsonGifts) {
+      if (!jsonGifts) return;
+      const sultans = jsonGifts.top_sultans || [];
+      const divGifts = document.getElementById('giftersList');
+
+      if (sultans.length > 0) {
+        divGifts.innerHTML = '';
+        sultans.forEach((s, idx) => {
+          const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉';
+          const item = document.createElement('div');
+          item.className = 'flex items-center justify-between p-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50';
+          item.innerHTML = `
+            <div class="flex items-center space-x-2.5">
+              <span class="text-base">${medal}</span>
+              <div>
+                <h4 class="text-xs font-bold text-white">${escapeHtml(s.nickname)}</h4>
+                <span class="text-[10px] text-slate-400">${s.gift_count} kali sawer</span>
+              </div>
+            </div>
+            <span class="text-xs font-extrabold text-emerald-400">Rp ${Number(s.total_gift_idr).toLocaleString()}</span>
+          `;
+          divGifts.appendChild(item);
+        });
+      } else {
+        divGifts.innerHTML = `
+          <div class="p-5 text-center text-xs text-slate-400 bg-slate-800/30 rounded-xl border border-slate-700/40">
+            <span>🎁 Belum ada saweran gift di sesi live ini.</span>
+          </div>
+        `;
+      }
+    }
+
+    async function refreshSecondaryTables() {
+      try {
+        const headers = { 'X-User-Role': 'viewer' };
+        const [resProd, resGifts] = await Promise.all([
+          fetch('/api/v1/products/demand?limit=10', { headers }),
+          fetch('/api/v1/gifters/leaderboard?limit=5', { headers })
+        ]);
+        if (resProd.ok) renderProductsPayload(await resProd.json());
+        if (resGifts.ok) renderGiftersPayload(await resGifts.json());
+      } catch (e) {
+        console.warn('Gagal menyegarkan tabel sekunder:', e);
+      }
+    }
+
+    async function refreshData() {
+      if (isRefreshing) return;
+      isRefreshing = true;
+      try {
+        const headers = { 'X-User-Role': 'viewer' };
+        const [resSum, resComments, resProd, resGifts] = await Promise.all([
+          fetch('/api/v1/live/summary', { headers }),
+          fetch('/api/v1/live/comments', { headers }),
+          fetch('/api/v1/products/demand?limit=10', { headers }),
+          fetch('/api/v1/gifters/leaderboard?limit=5', { headers })
+        ]);
+
+        if (resSum.ok) renderSummaryPayload(await resSum.json());
+        if (resComments.ok) renderCommentsPayload(await resComments.json());
+        if (resProd.ok) renderProductsPayload(await resProd.json());
+        if (resGifts.ok) renderGiftersPayload(await resGifts.json());
       } catch (err) {
         console.warn('Gagal memuat update live:', err);
+      } finally {
+        isRefreshing = false;
       }
     }
 
@@ -846,7 +1413,7 @@
 
     let currentCatalogItems = [];
 
-    async function openCatalogModal() {
+    async function openCatalogModal(forceTemplate = false) {
       const modal = document.getElementById('catalogModal');
       const streamerName = document.getElementById('modalStreamerName');
       const statusMsg = document.getElementById('catalogStatusMsg');
@@ -857,9 +1424,12 @@
       modal.classList.remove('hidden');
 
       try {
-        let url = `/api/v1/catalog?streamer=@${currentStreamer.replace('@', '')}`;
+        let url = `/api/v1/catalog?streamer=@${encodeURIComponent(currentStreamer.replace('@', ''))}`;
         if (currentNiche) {
           url += `&niche_override=${encodeURIComponent(currentNiche)}`;
+        }
+        if (currentStreamMode === 'REALTIME_TIKTOK_LIVE' && !forceTemplate) {
+          url += '&mode=live';
         }
         const resp = await fetch(url, {
           headers: { 'X-User-Role': 'viewer' }
@@ -868,12 +1438,33 @@
           const data = await resp.json();
           currentCatalogItems = data.products || [];
           renderCatalogRows();
-          statusMsg.innerText = `Memuat ${currentCatalogItems.length} produk`;
+          statusMsg.innerText = currentCatalogItems.length > 0
+            ? `Memuat ${currentCatalogItems.length} produk (${data.mode === 'live' ? 'Mode Live Asli' : 'Katalog'})`
+            : 'Belum ada etalase live tertangkap — klik + Tambah Baris atau Tempel Cepat';
         } else {
           statusMsg.innerText = 'Gagal memuat katalog';
         }
       } catch (e) {
         statusMsg.innerText = 'Error: ' + e;
+      }
+    }
+
+    async function resetCustomCatalog() {
+      const currentStreamer = document.getElementById('targetUsername').value.trim() || 'tokobaju';
+      const streamerKey = '@' + currentStreamer.replace('@', '');
+      const statusMsg = document.getElementById('catalogStatusMsg');
+      try {
+        const resp = await fetch(`/api/v1/catalog/custom?streamer=${encodeURIComponent(streamerKey)}`, {
+          method: 'DELETE',
+          headers: { 'X-User-Role': 'viewer' }
+        });
+        if (resp.ok) {
+          statusMsg.innerText = '🗑️ Katalog kustom dihapus';
+          await openCatalogModal();
+          await refreshData();
+        }
+      } catch (e) {
+        statusMsg.innerText = 'Error reset: ' + e;
       }
     }
 
@@ -1088,7 +1679,15 @@
     window.addEventListener('DOMContentLoaded', () => {
       initCharts();
       refreshData();
-      setInterval(refreshData, 2500);
+      connectSSE();
+
+      setInterval(() => {
+        if (!sseConnected) {
+          refreshData();
+        } else {
+          refreshSecondaryTables();
+        }
+      }, 4000);
     });
   </script>
 
@@ -1149,11 +1748,19 @@
         </table>
       </div>
 
-      <!-- Add row button -->
-      <div class="flex items-center justify-between pt-2 border-t border-slate-800">
-        <button onclick="addCatalogRow()" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center space-x-1 py-1 px-2.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
-          <span>+ Tambah Baris Etalase</span>
-        </button>
+      <!-- Add row button & template/reset controls -->
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800">
+        <div class="flex items-center space-x-2">
+          <button onclick="addCatalogRow()" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center space-x-1 py-1 px-2.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
+            <span>+ Tambah Baris Etalase</span>
+          </button>
+          <button onclick="openCatalogModal(true)" class="text-xs text-slate-300 hover:text-white py-1 px-2.5 rounded-lg bg-slate-800 border border-slate-700" title="Muat contoh template niche">
+            Muat Template Niche
+          </button>
+          <button onclick="resetCustomCatalog()" class="text-xs text-rose-400 hover:text-rose-300 py-1 px-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20" title="Hapus katalog kustom tersimpan untuk akun ini">
+            Reset Katalog
+          </button>
+        </div>
         <span id="catalogStatusMsg" class="text-xs text-slate-400"></span>
       </div>
 

@@ -1,0 +1,18 @@
+[
+  {
+    "etalase_no": 1,
+    "product_name": "Sepatu Test Edition 1",
+    "price_idr": 150000,
+    "sku": null,
+    "category": null,
+    "stock": 50
+  },
+  {
+    "etalase_no": 2,
+    "product_name": "Kaos Test Edition 2",
+    "price_idr": 75000,
+    "sku": null,
+    "category": null,
+    "stock": 50
+  }
+]

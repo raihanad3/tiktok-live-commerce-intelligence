@@ -26,6 +26,17 @@ SQLITE_DB_PATH = os.path.join(GOLD_DIR, "tikpulse_gold.db")
 os.makedirs(GOLD_DIR, exist_ok=True)
 
 IS_POSTGRES_AVAILABLE = None
+_GOLD_TABLES_INITIALIZED = False
+
+def _configure_sqlite_connection(conn: sqlite3.Connection):
+    """Mengaktifkan WAL mode & busy timeout agar baca/tulis konkuren tidak nge-lock."""
+    try:
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("PRAGMA synchronous=NORMAL;")
+        conn.execute("PRAGMA busy_timeout=5000;")
+        conn.execute("PRAGMA temp_store=MEMORY;")
+    except Exception:
+        pass
 
 def get_db_connection():
     """Mencoba koneksi PostgreSQL, jika offline beralih cepat ke SQLite ACID storage (dicache agar bebas latensi)."""
@@ -45,7 +56,8 @@ def get_db_connection():
             return conn, "POSTGRES"
         except Exception:
             IS_POSTGRES_AVAILABLE = False
-            conn = sqlite3.connect(SQLITE_DB_PATH)
+            conn = sqlite3.connect(SQLITE_DB_PATH, timeout=5.0)
+            _configure_sqlite_connection(conn)
             return conn, "SQLITE"
     elif IS_POSTGRES_AVAILABLE:
         try:
@@ -61,10 +73,12 @@ def get_db_connection():
             return conn, "POSTGRES"
         except Exception:
             IS_POSTGRES_AVAILABLE = False
-            conn = sqlite3.connect(SQLITE_DB_PATH)
+            conn = sqlite3.connect(SQLITE_DB_PATH, timeout=5.0)
+            _configure_sqlite_connection(conn)
             return conn, "SQLITE"
     else:
-        conn = sqlite3.connect(SQLITE_DB_PATH)
+        conn = sqlite3.connect(SQLITE_DB_PATH, timeout=5.0)
+        _configure_sqlite_connection(conn)
         return conn, "SQLITE"
 
 def init_gold_tables(conn, db_type="SQLITE"):
@@ -161,9 +175,130 @@ def init_gold_tables(conn, db_type="SQLITE"):
 
     conn.commit()
 
-def aggregate_silver_to_gold():
+def upsert_session_gold_snapshot(snapshot: dict):
+    """Menyimpan snapshot 1 sesi aktif ke Gold Marts dalam 1 transaksi singkat tanpa memindai ulang semua Parquet."""
+    global _GOLD_TABLES_INITIALIZED
+    if not snapshot or not snapshot.get("session_id"):
+        return
+
+    conn, db_type = get_db_connection()
+    try:
+        if not _GOLD_TABLES_INITIALIZED:
+            init_gold_tables(conn, db_type)
+            _GOLD_TABLES_INITIALIZED = True
+        cur = conn.cursor()
+
+        session_id = snapshot["session_id"]
+        streamer = snapshot.get("streamer", "unknown")
+        summary = snapshot.get("summary", {})
+        now_str = datetime.now(timezone.utc).isoformat()
+
+        # 1. Upsert mart_product_demand
+        for item in snapshot.get("product_demand", []):
+            et = int(item["etalase_no"])
+            pname = str(item.get("product_name", f"Etalase #{et}"))
+            price = int(item.get("price_idr", 0) or 0)
+            req_cnt = int(item.get("request_count", 0) or 0)
+            intent_cnt = int(item.get("high_intent_count", 0) or 0)
+            last_req = str(item.get("last_requested_at") or now_str)
+
+            if db_type == "POSTGRES":
+                cur.execute("""
+                    INSERT INTO mart_product_demand (session_id, streamer, etalase_no, product_name, price_idr, request_count, high_intent_count, last_requested_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (session_id, etalase_no) DO UPDATE SET
+                        product_name = EXCLUDED.product_name,
+                        price_idr = EXCLUDED.price_idr,
+                        request_count = EXCLUDED.request_count,
+                        high_intent_count = EXCLUDED.high_intent_count,
+                        last_requested_at = EXCLUDED.last_requested_at;
+                """, (session_id, streamer, et, pname, price, req_cnt, intent_cnt, last_req))
+            else:
+                cur.execute("""
+                    INSERT INTO mart_product_demand (session_id, streamer, etalase_no, product_name, price_idr, request_count, high_intent_count, last_requested_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT (session_id, etalase_no) DO UPDATE SET
+                        product_name = excluded.product_name,
+                        price_idr = excluded.price_idr,
+                        request_count = excluded.request_count,
+                        high_intent_count = excluded.high_intent_count,
+                        last_requested_at = excluded.last_requested_at;
+                """, (session_id, streamer, et, pname, price, req_cnt, intent_cnt, last_req))
+
+        # 2. Upsert mart_top_gifters
+        for g in snapshot.get("top_gifters", []):
+            uid = str(g["user_id"])
+            nick = str(g.get("nickname", "Sultan_TikTok"))
+            tot_idr = int(g.get("total_gift_idr", 0) or 0)
+            cnt = int(g.get("gift_count", 0) or 0)
+            last_at = str(g.get("last_gift_at") or now_str)
+
+            if db_type == "POSTGRES":
+                cur.execute("""
+                    INSERT INTO mart_top_gifters (session_id, streamer, user_id, nickname, total_gift_idr, gift_count, last_gift_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (session_id, user_id) DO UPDATE SET
+                        nickname = EXCLUDED.nickname,
+                        total_gift_idr = EXCLUDED.total_gift_idr,
+                        gift_count = EXCLUDED.gift_count,
+                        last_gift_at = EXCLUDED.last_gift_at;
+                """, (session_id, streamer, uid, nick, tot_idr, cnt, last_at))
+            else:
+                cur.execute("""
+                    INSERT INTO mart_top_gifters (session_id, streamer, user_id, nickname, total_gift_idr, gift_count, last_gift_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT (session_id, user_id) DO UPDATE SET
+                        nickname = excluded.nickname,
+                        total_gift_idr = excluded.total_gift_idr,
+                        gift_count = excluded.gift_count,
+                        last_gift_at = excluded.last_gift_at;
+                """, (session_id, streamer, uid, nick, tot_idr, cnt, last_at))
+
+        # 3. Upsert mart_live_summary
+        tot_comm = int(summary.get("total_comments", 0) or 0)
+        tot_rev = int(summary.get("total_gift_revenue_idr", 0) or 0)
+        buy_cnt = int(summary.get("purchase_intent_count", 0) or 0)
+        q_cnt = int(summary.get("question_count", 0) or 0)
+        c_cnt = int(summary.get("complaint_count", 0) or 0)
+
+        if db_type == "POSTGRES":
+            cur.execute("""
+                INSERT INTO mart_live_summary (session_id, streamer, total_comments, total_gift_revenue_idr, purchase_intent_count, question_count, complaint_count, last_updated)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
+                ON CONFLICT (session_id) DO UPDATE SET
+                    streamer = EXCLUDED.streamer,
+                    total_comments = EXCLUDED.total_comments,
+                    total_gift_revenue_idr = EXCLUDED.total_gift_revenue_idr,
+                    purchase_intent_count = EXCLUDED.purchase_intent_count,
+                    question_count = EXCLUDED.question_count,
+                    complaint_count = EXCLUDED.complaint_count,
+                    last_updated = NOW();
+            """, (session_id, streamer, tot_comm, tot_rev, buy_cnt, q_cnt, c_cnt))
+        else:
+            cur.execute("""
+                INSERT INTO mart_live_summary (session_id, streamer, total_comments, total_gift_revenue_idr, purchase_intent_count, question_count, complaint_count, last_updated)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT (session_id) DO UPDATE SET
+                    streamer = excluded.streamer,
+                    total_comments = excluded.total_comments,
+                    total_gift_revenue_idr = excluded.total_gift_revenue_idr,
+                    purchase_intent_count = excluded.purchase_intent_count,
+                    question_count = excluded.question_count,
+                    complaint_count = excluded.complaint_count,
+                    last_updated = excluded.last_updated;
+            """, (session_id, streamer, tot_comm, tot_rev, buy_cnt, q_cnt, c_cnt, now_str))
+
+        conn.commit()
+    finally:
+        conn.close()
+
+def aggregate_silver_to_gold(session_id_filter: str = None):
     """Membaca file Parquet Silver dan mengupdate Marts di Database dengan isolasi ketat per sesi."""
     parquet_files = glob.glob(os.path.join(SILVER_DIR, "*.parquet"))
+    if session_id_filter:
+        filtered = [f for f in parquet_files if session_id_filter in os.path.basename(f)]
+        if filtered:
+            parquet_files = filtered
     if not parquet_files:
         return
 
@@ -178,6 +313,8 @@ def aggregate_silver_to_gold():
         return
 
     df_all = pd.concat(df_list, ignore_index=True)
+    if session_id_filter and not df_all.empty:
+        df_all = df_all[df_all["session_id"] == session_id_filter]
     if df_all.empty:
         return
 

@@ -8,9 +8,14 @@ import os
 import re
 import json
 import pandas as pd
+from typing import Optional
 
 CUSTOM_CATALOGS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data", "catalogs"))
 os.makedirs(CUSTOM_CATALOGS_DIR, exist_ok=True)
+
+_CUSTOM_CATALOG_CACHE: dict[str, Optional[list[dict]]] = {}
+_STORE_CATALOG_DF_CACHE: dict[tuple[str, str], pd.DataFrame] = {}
+_CATALOG_CACHE_VERSION: int = 0
 
 BRAND_CATALOGS = {
     "aerostreet": {
@@ -309,41 +314,109 @@ def clean_store_title(streamer: str) -> str:
     words = [w.capitalize() for w in s.split() if w]
     return " ".join(words) if words else "Toko Pilihan"
 
+def _normalize_streamer_key(streamer: str) -> str:
+    return (streamer or "").lower().replace("@", "").strip()
+
+def get_catalog_cache_version() -> int:
+    return _CATALOG_CACHE_VERSION
+
+def invalidate_catalog_cache(streamer: Optional[str] = None) -> None:
+    """Membersihkan cache katalog agar perubahan disk langsung terbaca."""
+    global _CATALOG_CACHE_VERSION
+    _CATALOG_CACHE_VERSION += 1
+    if streamer is None:
+        _CUSTOM_CATALOG_CACHE.clear()
+        _STORE_CATALOG_DF_CACHE.clear()
+        return
+    clean = _normalize_streamer_key(streamer)
+    _CUSTOM_CATALOG_CACHE.pop(clean, None)
+    keys_to_remove = [k for k in _STORE_CATALOG_DF_CACHE if k[0] == clean]
+    for k in keys_to_remove:
+        _STORE_CATALOG_DF_CACHE.pop(k, None)
+
+def get_custom_catalog_path(streamer: str) -> str:
+    clean = _normalize_streamer_key(streamer)
+    return os.path.join(CUSTOM_CATALOGS_DIR, f"{clean}_catalog.json")
+
+def has_custom_store_catalog(streamer: str) -> bool:
+    clean = _normalize_streamer_key(streamer)
+    if clean in _CUSTOM_CATALOG_CACHE:
+        return bool(_CUSTOM_CATALOG_CACHE[clean])
+    return os.path.exists(get_custom_catalog_path(streamer))
+
+def load_custom_store_catalog(streamer: str) -> list[dict]:
+    """Membaca HANYA katalog kustom milik streamer dari JSON (dengan cache memori). Tidak pernah jatuh ke template palsu."""
+    clean = _normalize_streamer_key(streamer)
+    if not clean:
+        return []
+    if clean in _CUSTOM_CATALOG_CACHE:
+        cached = _CUSTOM_CATALOG_CACHE[clean]
+        return [dict(item) for item in cached] if cached else []
+
+    filepath = get_custom_catalog_path(streamer)
+    if not os.path.exists(filepath):
+        _CUSTOM_CATALOG_CACHE[clean] = None
+        return []
+
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            items = json.load(f)
+        normalized = []
+        title_fallback = clean_store_title(streamer)
+        for it in items:
+            et_no = int(it["etalase_no"])
+            pname = str(it["product_name"])
+            normalized.append({
+                "etalase_no": et_no,
+                "sku": str(it.get("sku") or f"PRD-{clean[:4].upper()}-{et_no:03d}"),
+                "product_name": pname,
+                "category": str(it.get("category") or f"Katalog {title_fallback}"),
+                "price_idr": int(it.get("price_idr", 0)),
+                "stock": int(it.get("stock", 50)),
+                "keywords": str(it.get("keywords") or pname.lower()),
+                "source": str(it.get("source") or "CUSTOM_CATALOG")
+            })
+        _CUSTOM_CATALOG_CACHE[clean] = normalized
+        return [dict(item) for item in normalized]
+    except Exception as e:
+        print(f"[CUSTOM CATALOG ERROR] {e}")
+        return []
+
 def save_custom_store_catalog(streamer: str, products_list: list) -> bool:
-    """Menyimpan katalog kustom toko ke penyimpanan JSON permanen."""
-    clean = streamer.lower().replace("@", "").strip()
-    filepath = os.path.join(CUSTOM_CATALOGS_DIR, f"{clean}_catalog.json")
+    """Menyimpan katalog kustom toko ke penyimpanan JSON permanen dan memperbarui cache."""
+    filepath = get_custom_catalog_path(streamer)
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(products_list, f, indent=2, ensure_ascii=False)
+    invalidate_catalog_cache(streamer)
     return True
+
+def delete_custom_store_catalog(streamer: str) -> bool:
+    """Menghapus file katalog kustom toko jika ada dan membersihkan cache."""
+    filepath = get_custom_catalog_path(streamer)
+    removed = False
+    if os.path.exists(filepath):
+        os.remove(filepath)
+        removed = True
+    invalidate_catalog_cache(streamer)
+    return removed
 
 def get_store_catalog(streamer: str, niche_override: str = None) -> pd.DataFrame:
     """Mengembalikan katalog produk toko (Kustom Toko > Manual Niche Override > Brand Resmi > Niche Catalog > Universal)."""
-    clean = streamer.lower().replace("@", "").strip()
-    
+    clean = _normalize_streamer_key(streamer)
+    norm_override = normalize_niche_key(niche_override) if niche_override else ""
+    cache_key = (clean, norm_override)
+
+    if cache_key in _STORE_CATALOG_DF_CACHE:
+        return _STORE_CATALOG_DF_CACHE[cache_key].copy()
+
     # 1. Cek apakah ada katalog kustom yang disimpan pengguna untuk toko ini
-    custom_filepath = os.path.join(CUSTOM_CATALOGS_DIR, f"{clean}_catalog.json")
-    if os.path.exists(custom_filepath):
-        try:
-            with open(custom_filepath, "r", encoding="utf-8") as f:
-                items = json.load(f)
-            data = []
-            for it in items:
-                data.append({
-                    "etalase_no": int(it["etalase_no"]),
-                    "sku": str(it.get("sku", f"PRD-{clean[:4].upper()}-{int(it['etalase_no']):03d}")),
-                    "product_name": str(it["product_name"]),
-                    "category": str(it.get("category", f"Katalog {clean_store_title(streamer)}")),
-                    "price_idr": int(it["price_idr"]),
-                    "stock": int(it.get("stock", 50)),
-                    "keywords": str(it.get("keywords", str(it["product_name"]).lower()))
-                })
-            return pd.DataFrame(data)
-        except Exception as e:
-            print(f"[CUSTOM CATALOG ERROR] {e}")
+    custom_items = load_custom_store_catalog(streamer)
+    if custom_items:
+        df = pd.DataFrame(custom_items)
+        _STORE_CATALOG_DF_CACHE[cache_key] = df
+        return df.copy()
 
     # 2. Manual Niche Override jika dipilih pengguna
-    norm_override = normalize_niche_key(niche_override)
     if norm_override and norm_override in STORE_NICHES:
         rows = STORE_NICHES[norm_override]["products"]
         data = []
@@ -357,7 +430,9 @@ def get_store_catalog(streamer: str, niche_override: str = None) -> pd.DataFrame
                 "stock": r[4],
                 "keywords": r[5]
             })
-        return pd.DataFrame(data)
+        df = pd.DataFrame(data)
+        _STORE_CATALOG_DF_CACHE[cache_key] = df
+        return df.copy()
 
     # 3. Cek apakah streamer cocok dengan brand spesifik resmi
     for brand_key, brand_data in BRAND_CATALOGS.items():
@@ -373,7 +448,9 @@ def get_store_catalog(streamer: str, niche_override: str = None) -> pd.DataFrame
                     "stock": r[4],
                     "keywords": r[5]
                 })
-            return pd.DataFrame(data)
+            df = pd.DataFrame(data)
+            _STORE_CATALOG_DF_CACHE[cache_key] = df
+            return df.copy()
 
     # 4. Niche Fallback (Auto-detect / Smart hash)
     niche = detect_store_niche(streamer)
@@ -390,7 +467,9 @@ def get_store_catalog(streamer: str, niche_override: str = None) -> pd.DataFrame
                 "stock": r[4],
                 "keywords": r[5]
             })
-        return pd.DataFrame(data)
+        df = pd.DataFrame(data)
+        _STORE_CATALOG_DF_CACHE[cache_key] = df
+        return df.copy()
 
     # 5. Universal Fallback
     title = clean_store_title(streamer)
@@ -417,7 +496,9 @@ def get_store_catalog(streamer: str, niche_override: str = None) -> pd.DataFrame
             "stock": it[3],
             "keywords": it[4]
         })
-    return pd.DataFrame(data)
+    df = pd.DataFrame(data)
+    _STORE_CATALOG_DF_CACHE[cache_key] = df
+    return df.copy()
 
 def get_store_comments(streamer: str, niche_override: str = None) -> list[str]:
     """Mengembalikan daftar komentar simulasi yang sesuai jika dibutuhkan."""
