@@ -101,3 +101,33 @@ def test_hybrid_niche_detection_hash_consistency():
     assert niche_1 in ["fashion", "sports", "shoes", "skincare", "hijab", "gadgets", "culinary"]
 
 
+def test_niche_benchmark_endpoint():
+    """Menguji endpoint Batch Niche Benchmark dan metadata korpus ML."""
+    response = client.get("/api/v1/benchmark/niche", headers={"role": "viewer"})
+    assert response.status_code == 200
+    data = response.json()
+    assert "niche_benchmark" in data
+    assert "ml_model_stats" in data
+    assert "golden_hour_wib" in data["niche_benchmark"]
+
+
+def test_batch_harvest_rbac_forbidden_for_viewer():
+    """Menguji kontrol akses RBAC: viewer dilarang memicu batch harvester (HTTP 403)."""
+    response = client.post(
+        "/api/v1/batch/harvest/run",
+        json={"duration_sec": 5},
+        headers={"role": "viewer"}
+    )
+    assert response.status_code == 403
+
+
+def test_auto_label_intent_harvester():
+    """Menguji weak supervision auto-labeling pada TikTok Batch Harvester."""
+    from ingestion.tiktok_batch_harvester import auto_label_intent
+    assert auto_label_intent("kak spill no 5 mau checkout sekarang")[0] == "INTENT_BUY"
+    assert auto_label_intent("ukuran M buat bb 60 muat ga kak?")[0] == "QUESTION"
+    assert auto_label_intent("barang datang robek kecewa banget")[0] == "COMPLAINT"
+    assert auto_label_intent("halo kak salam dari bandung")[0] == "CASUAL"
+
+
+

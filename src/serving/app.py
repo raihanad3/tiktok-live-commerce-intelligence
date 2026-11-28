@@ -13,6 +13,7 @@ Fitur:
 
 import os
 import sys
+import json
 import time
 import uuid
 import random
@@ -884,5 +885,146 @@ def update_catalog_endpoint(req: UpdateCatalogRequest, role: str = Header("viewe
         "message": f"Katalog untuk {target_streamer} berhasil diperbarui ({len(items)} produk).",
         "streamer": target_streamer,
         "total_updated": len(items)
+    }
+
+
+@app.get("/api/v1/benchmark/niche", tags=["Analytics Marts"])
+def get_niche_benchmark(role: str = Header("viewer")):
+    """
+    Mengambil data Batch Competitor & Niche Benchmark (dari TikTok Batch Harvester)
+    serta metadata training model ML terbaru untuk dibandingkan dengan sesi live saat ini.
+    """
+    verify_access(role, "viewer")
+    target_niche = active_niche or detect_store_niche(active_streamer)
+
+    niche_data = None
+    try:
+        with DatabaseContext() as db:
+            cur = db.execute_query("""
+                SELECT niche, total_comments, total_sessions, intent_buy_rate_pct,
+                       question_rate_pct, complaint_rate_pct, golden_hour_wib,
+                       top_keywords, top_complaints, last_updated
+                FROM mart_niche_benchmark
+                WHERE niche = %s
+                LIMIT 1;
+            """, (target_niche,))
+            row = cur.fetchone()
+            if row:
+                niche_data = dict(row)
+                for field in ("top_keywords", "top_complaints"):
+                    try:
+                        niche_data[field] = json.loads(niche_data.get(field) or "[]")
+                    except Exception:
+                        niche_data[field] = []
+    except Exception as e:
+        print(f"[NICHE BENCHMARK WARN] {e}")
+
+    # Hitung intent rate sesi live saat ini
+    live_buy_rate = 0.0
+    try:
+        with DatabaseContext() as db:
+            cur = db.execute_query("""
+                SELECT total_comments, purchase_intent_count
+                FROM mart_live_summary
+                WHERE session_id = %s
+                LIMIT 1;
+            """, (active_session_id,))
+            srow = cur.fetchone()
+            if srow and srow["total_comments"] > 0:
+                live_buy_rate = round(srow["purchase_intent_count"] / srow["total_comments"] * 100.0, 1)
+    except Exception:
+        pass
+
+    if live_buy_rate == 0.0 and recent_comments_buffer:
+        comm_only = [c for c in recent_comments_buffer if c.get("event_type") == "comment"]
+        if comm_only:
+            buy_c = len([c for c in comm_only if c.get("ml_intent") == "INTENT_BUY"])
+            live_buy_rate = round(buy_c / len(comm_only) * 100.0, 1)
+
+    if not niche_data:
+        niche_data = {
+            "niche": target_niche,
+            "total_comments": 0,
+            "total_sessions": 0,
+            "intent_buy_rate_pct": 0.0,
+            "question_rate_pct": 0.0,
+            "complaint_rate_pct": 0.0,
+            "golden_hour_wib": "19:00 - 21:00 WIB",
+            "top_keywords": [],
+            "top_complaints": [],
+            "last_updated": None,
+        }
+
+    delta_pct = round(live_buy_rate - float(niche_data.get("intent_buy_rate_pct", 0.0)), 1)
+
+    # Baca metadata model ML Batch
+    ml_meta_path = os.path.join(os.path.dirname(__file__), "..", "ml", "model_metadata.json")
+    ml_stats = {
+        "best_model": "exp_1_logistic_regression",
+        "f1_score": 0.0,
+        "total_training_samples": 0,
+        "harvested_tiktok_samples": 0,
+    }
+    if os.path.exists(ml_meta_path):
+        try:
+            with open(ml_meta_path, "r", encoding="utf-8") as f:
+                ml_stats = json.load(f)
+        except Exception:
+            pass
+
+    return {
+        "streamer": active_streamer,
+        "niche": target_niche,
+        "live_intent_buy_rate_pct": live_buy_rate,
+        "live_vs_niche_delta_pct": delta_pct,
+        "niche_benchmark": niche_data,
+        "ml_model_stats": ml_stats,
+        "retrieved_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+class BatchHarvestRequest(BaseModel):
+    usernames: Optional[List[str]] = None
+    niche: Optional[str] = None
+    duration_sec: int = Field(default=15, ge=5, le=120)
+    retrain_ml: bool = True
+
+
+@app.post("/api/v1/batch/harvest/run", tags=["Batch Pipeline"])
+async def trigger_batch_harvest(
+    req: BatchHarvestRequest,
+    role: Optional[str] = Header("viewer", alias="role"),
+    x_user_role: Optional[str] = Header(None, alias="X-User-Role"),
+):
+    """
+    Memicu Multi-Room TikTok Live Batch Harvester dan melatih ulang model ML (khusus Admin, F-02 & F-11).
+    """
+    user_role = x_user_role or role or "viewer"
+    if user_role.lower() != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Akses ditolak: Hanya peran 'admin' yang diizinkan.")
+
+    from ingestion.tiktok_batch_harvester import run_batch_harvest
+    harvest_res = await run_batch_harvest(
+        usernames=req.usernames,
+        niche_filter=req.niche,
+        duration_sec=req.duration_sec,
+    )
+
+    retrained = False
+    if req.retrain_ml:
+        try:
+            from ml.train_intent_model import train_and_evaluate
+            new_model = train_and_evaluate()
+            global ml_model
+            ml_model = new_model
+            processor.model = new_model
+            retrained = True
+        except Exception as e:
+            print(f"[BATCH RETRAIN WARN] {e}")
+
+    return {
+        "status": "SUCCESS",
+        "harvest_result": harvest_res,
+        "ml_model_retrained": retrained,
     }
 

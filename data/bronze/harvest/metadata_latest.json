@@ -1,0 +1,11 @@
+{
+  "batch_id": "9d7c1b35b8",
+  "harvest_time": "2026-11-28T06:35:45.533132+00:00",
+  "live_rooms": [
+    "@somethincofficial",
+    "@wardahofficial"
+  ],
+  "total_raw_events": 24,
+  "checksum": "d0cef0158dd9cc3013a6d3600ade9572",
+  "bronze_file": "harvest_9d7c1b35b8.jsonl"
+}

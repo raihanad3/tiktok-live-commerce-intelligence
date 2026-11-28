@@ -6,19 +6,24 @@ Fitur: Split train-test (seed=42), No data leakage, Evaluasi F1/Precision/Recall
 """
 
 import os
+import json
 import joblib
 import pandas as pd
+from datetime import datetime, timezone
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report, f1_score, precision_score, recall_score, accuracy_score
+from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score
 from sklearn.pipeline import Pipeline
 
-# Konfigurasi MLflow
+# Konfigurasi MLflow & Path
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
 MODEL_DIR = os.path.dirname(__file__)
 MODEL_ARTIFACT_PATH = os.path.join(MODEL_DIR, "model_intent.joblib")
+MODEL_META_PATH = os.path.join(MODEL_DIR, "model_metadata.json")
+HARVEST_CSV_PATH = os.path.abspath(os.path.join(MODEL_DIR, "..", "..", "data", "batch", "harvested_labeled_comments.csv"))
 
 def get_training_dataset():
     """
@@ -71,15 +76,36 @@ def get_training_dataset():
         ("Minta retur barang rusak gimana caranya min", "COMPLAINT")
     ]
     df = pd.DataFrame(data, columns=["text", "label"])
+    df["source"] = "curated_baseline"
+
+    # Gabungkan dengan korpus nyata hasil TikTok Batch Harvester jika tersedia
+    if os.path.exists(HARVEST_CSV_PATH):
+        try:
+            df_harvest = pd.read_csv(HARVEST_CSV_PATH)
+            valid_labels = {"INTENT_BUY", "QUESTION", "CASUAL", "COMPLAINT"}
+            if {"text", "label"}.issubset(df_harvest.columns):
+                df_h = df_harvest[["text", "label"]].copy()
+                df_h["text"] = df_h["text"].astype(str).str.strip()
+                df_h = df_h[df_h["label"].isin(valid_labels) & (df_h["text"].str.len() >= 3)]
+                df_h["source"] = "tiktok_harvest_batch"
+                df = pd.concat([df, df_h], ignore_index=True)
+        except Exception as e:
+            print(f"[TRAIN WARN] Gagal membaca harvested_labeled_comments.csv: {e}")
+
+    # Deduplikasi case-insensitive untuk mencegah data leakage antara train dan test
+    df["_norm"] = df["text"].str.lower().str.strip()
+    df = df.drop_duplicates(subset=["_norm"]).drop(columns=["_norm"]).reset_index(drop=True)
     return df
 
 def train_and_evaluate(experiment_name="Baseline_LogisticRegression"):
     """
-    Melatih model dengan MLflow tracking untuk membandingkan 2 eksperimen (F-11).
+    Melatih model dengan MLflow tracking untuk membandingkan 3 eksperimen (F-11)
+    menggunakan kombinasi dataset kurasi + data Batch Harvester TikTok.
     """
     df = get_training_dataset()
     X = df["text"]
     y = df["label"]
+    harvested_count = int((df["source"] == "tiktok_harvest_batch").sum()) if "source" in df.columns else 0
 
     # Split train/test dengan random_state tetap untuk reproducibility
     X_train, X_test, y_train, y_test = train_test_split(
@@ -89,20 +115,25 @@ def train_and_evaluate(experiment_name="Baseline_LogisticRegression"):
     models_to_test = {
         "exp_1_logistic_regression": Pipeline([
             ("tfidf", TfidfVectorizer(ngram_range=(1, 2))),
-            ("clf", LogisticRegression(random_state=42, max_iter=200))
+            ("clf", LogisticRegression(random_state=42, max_iter=300, class_weight="balanced"))
         ]),
-        "exp_2_random_forest": Pipeline([
+        "exp_2_multinomial_nb": Pipeline([
             ("tfidf", TfidfVectorizer(ngram_range=(1, 2))),
-            ("clf", RandomForestClassifier(n_estimators=50, random_state=42))
+            ("clf", MultinomialNB(alpha=0.5))
+        ]),
+        "exp_3_random_forest": Pipeline([
+            ("tfidf", TfidfVectorizer(ngram_range=(1, 2))),
+            ("clf", RandomForestClassifier(n_estimators=80, random_state=42, class_weight="balanced"))
         ])
     }
 
     best_f1 = 0.0
+    best_acc = 0.0
     best_pipeline = None
     best_name = ""
 
     print(f"\n=======================================================")
-    print(f"MLflow Training Run: {len(X_train)} Train, {len(X_test)} Test")
+    print(f"MLflow Training Run: {len(X_train)} Train, {len(X_test)} Test (Total: {len(df)}, Harvested: {harvested_count})")
     print(f"=======================================================")
 
     for exp_id, pipeline in models_to_test.items():
@@ -127,6 +158,8 @@ def train_and_evaluate(experiment_name="Baseline_LogisticRegression"):
             mlflow.set_experiment("TikPulse_Purchase_Intent")
             with mlflow.start_run(run_name=exp_id):
                 mlflow.log_param("model_type", exp_id)
+                mlflow.log_param("total_samples", len(df))
+                mlflow.log_param("harvested_samples", harvested_count)
                 mlflow.log_metric("accuracy", acc)
                 mlflow.log_metric("f1_score", f1)
                 mlflow.log_metric("precision", prec)
@@ -138,12 +171,25 @@ def train_and_evaluate(experiment_name="Baseline_LogisticRegression"):
 
         if f1 >= best_f1:
             best_f1 = f1
+            best_acc = acc
             best_pipeline = pipeline
             best_name = exp_id
 
-    # Simpan model terbaik ke disk sebagai artefak produksi
+    # Simpan model terbaik ke disk sebagai artefak produksi + metadata training
     joblib.dump(best_pipeline, MODEL_ARTIFACT_PATH)
-    print(f"\n[MODEL SAVED] Model terbaik '{best_name}' (F1: {best_f1:.4f}) disimpan di: {MODEL_ARTIFACT_PATH}")
+    meta = {
+        "best_model": best_name,
+        "f1_score": round(float(best_f1), 4),
+        "accuracy": round(float(best_acc), 4),
+        "total_training_samples": len(df),
+        "harvested_tiktok_samples": harvested_count,
+        "baseline_samples": len(df) - harvested_count,
+        "trained_at": datetime.now(timezone.utc).isoformat(),
+    }
+    with open(MODEL_META_PATH, "w", encoding="utf-8") as f:
+        json.dump(meta, f, indent=2)
+
+    print(f"\n[MODEL SAVED] Model terbaik '{best_name}' (F1: {best_f1:.4f}, Samples: {len(df)}) disimpan di: {MODEL_ARTIFACT_PATH}")
     return best_pipeline
 
 if __name__ == "__main__":

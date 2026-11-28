@@ -1,0 +1,9 @@
+{
+  "best_model": "exp_2_multinomial_nb",
+  "f1_score": 0.8119,
+  "accuracy": 0.8165,
+  "total_training_samples": 436,
+  "harvested_tiktok_samples": 404,
+  "baseline_samples": 32,
+  "trained_at": "2026-11-28T06:37:38.772244+00:00"
+}

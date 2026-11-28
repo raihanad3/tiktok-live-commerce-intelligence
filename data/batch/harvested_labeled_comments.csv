@@ -1,0 +1,405 @@
+text,label,confidence,streamer,niche,source,harvested_at
+Udah checkout sneakers no 1 ya min tolong segera dikirim!,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T06:19:18.413966+00:00
+Sepatu running no 2 bahannya enteng gak kak mau beli buat jogging,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T06:19:21.662000+00:00
+Sandal slide no 4 bahan eva foam nya empuk gak kak?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T06:19:25.664544+00:00
+Spill etalase 1 min mau lihat jahitan sol sampingnya,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T06:19:29.709231+00:00
+Bisa COD sepatu no 2 ke Bandung min?,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T06:19:36.809920+00:00
+Kak tolong spill sneakers retro nomor 1 dong mau checkout!,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T06:19:43.562336+00:00
+Slip on no 3 muat untuk kaki lebar gak min mau co,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T06:19:46.679090+00:00
+Tali sepatu no 7 panjang berapa cm kak?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T06:20:06.757681+00:00
+Pembersih sepatu no 6 aman buat bahan suede gak min?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T06:20:21.172618+00:00
+Sepatu no 1 warna putih gum ready size 42 gak min?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T06:20:36.119344+00:00
+15 kk,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T06:55:16.435205+00:00
+Austin ka,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T06:56:46.619707+00:00
+"kak spil etlse no 6 , size41",QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T06:58:31.085167+00:00
+sepatu terbaru apa kak,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T06:59:16.654435+00:00
+mau,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:07:09.285587+00:00
+Ojo semangat2,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:07:10.260864+00:00
+AQ kesel [thanks],CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:07:10.309636+00:00
+😸😸😸,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:07:10.367728+00:00
+hallo kak payment skrng bsa kirim hari ini tdk kak,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:07:17.194037+00:00
+asam urat ku kumat 😭,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:07:28.703468+00:00
+exfoliasi serumnya bisa dipake dari umur?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:08:00.464694+00:00
+Udah co,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:08:01.568501+00:00
+checkmatte yang warnanya mirip sama nightshade batman yang mana kaaa,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:08:01.609692+00:00
+somethinc dark spot reducer ada kak,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:08:01.660333+00:00
+kak cover blur yang shade linen sama charlotte beda jauh gaa sii,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:08:02.660044+00:00
+Bedak tabur kk,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:08:02.688541+00:00
+@Ricko Uwais 😭,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:08:09.058239+00:00
+skintint shade coco kapan restokk?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:08:46.922239+00:00
+👍🏿👍🏿👍🏿👍🏿👍🏿👍🏿👍🏿👍🏿👍🏿👍🏿👍🏿👍🏿👍🏿👍🏿👍🏿👍🏿🌹🌹🌹🌹🌹🌹🌹🌹🌹🌹🌹🌹🌹🌹🌹🌹,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:09:00.589368+00:00
+"ka kalo pesen sekarang dikirim ke Prumnas Klender Jakarta Timur,kira2 Sampainya kapan ya ?",QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:09:13.195854+00:00
+co skrg nyampe tanggal berapa k cianjur?,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:09:44.755270+00:00
+tulisannya 17-20 november ka,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:09:53.867699+00:00
+klo pesen skrng dikirim nya hri ini apa bsok ya ka ? soalnya tgl 19 nya mau prgi ka,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:11:00.759675+00:00
+aku udah co 10 mau dpake jumat,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:11:07.683337+00:00
+Utuk wajah Kusam dan bintik hitam dan kering,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:11:45.329076+00:00
+et 4 kak,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:12:05.937607+00:00
+serum,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:12:07.566665+00:00
+etalae4 di hrg192rb,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:12:46.719201+00:00
+Kak spill shade bedak tabur fair light dan light,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:13:33.581631+00:00
+spil etalase 6 kak,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:14:16.855185+00:00
+Kalau translusen?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T07:14:18.993367+00:00
+jogger panjang kak,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T08:49:10.975052+00:00
+Kemeja butter yellow pria kak,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T08:49:13.019273+00:00
+spill eta 1,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T08:49:14.378343+00:00
+ini ga bisa cod ya kk,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T08:49:15.828310+00:00
+spill putih,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T08:49:17.187497+00:00
+putih polos,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T08:49:18.324300+00:00
+99k,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T08:51:37.005862+00:00
+beneran ga,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T08:51:47.006912+00:00
+sepatu putih,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T08:52:07.664431+00:00
+austin natural,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T14:54:35.134315+00:00
+yang bisa dipkai ce/co rekomend yang mana kak?,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T14:54:35.995049+00:00
+kak spill yg ortis hitam,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T14:54:36.010835+00:00
+kaos aerostreat terbaru yang mana kak,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T14:54:36.061596+00:00
+kaos terbaru yang mana kak,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T14:54:36.101874+00:00
+buat cewek pilih Austin apa Diego kak,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T14:54:36.144531+00:00
+liat denver full hitam,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T14:54:44.519151+00:00
+austin buat cowo ga cocok yaaaaa,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T14:56:55.788090+00:00
+sepatu hiking trek nya gila bet rekom,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T14:56:58.346573+00:00
+telapak 25 pake size berapa kak,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T14:57:43.632263+00:00
+Et 16 bang,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T14:58:00.346129+00:00
+ET3 abu putih,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T14:58:23.663144+00:00
+dah co kk,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T14:58:42.924136+00:00
+45 gak ada yah ?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T14:58:50.159721+00:00
+mau liat sepatu yg caille sneakers dong ka,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T14:59:12.981082+00:00
+yg caille mending navy apa peach,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:00:47.379132+00:00
+"Udah CO et 16 yg putih birunya, kak",INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:00:49.718231+00:00
+kaos ul m sama l beda jauh ga?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:01:00.465478+00:00
+spil etalse 3,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:01:04.569082+00:00
+kaos ukuran m sama l beda jauh ga?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:01:12.067377+00:00
+kak callie bisa buat jogging lari ga,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:01:15.396509+00:00
+mau liat kak bandingin navy sama peach,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:01:29.681318+00:00
+kak buat casual yang mana yang cowok,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:06:06.689914+00:00
+ka etalase tiga kokkkk naik harganya,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:06:06.723892+00:00
+😭😭😭😭,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:06:06.778217+00:00
+udh aku tap tap love,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:06:07.689027+00:00
+kapan turun lagi nih t shirt 30k😭,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:06:20.149541+00:00
+Et 28 buat panjang kaki 24.5 pke sz brpa kak,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:06:32.426643+00:00
+colab x wonderful yg mna kak,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:06:34.946594+00:00
+kak spill etalase 7,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:07:09.724673+00:00
+kemarin dapat 😭,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:07:11.879083+00:00
+🥲🥲🥲🥲,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:07:23.939865+00:00
+kak dlu AQ pernah dapat harga 25 k😅,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:07:45.492310+00:00
+Yg boxy bb 48 tb 158 ambil size apa ka?,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:08:33.359821+00:00
+yang di pegang etalase berapa,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:08:53.174129+00:00
+etalase 2,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:09:42.549528+00:00
+liat model libero dong,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:10:14.849347+00:00
+Spil 13 kak,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:10:36.154076+00:00
+aku udah pesen austin,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:10:51.040548+00:00
+Spil et 13,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:10:58.305907+00:00
+spil et 18 ka,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:11:16.640134+00:00
+austin natural spill deket kaaa,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:11:34.994659+00:00
+"yuhu, hihu",CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:11:48.305758+00:00
+"suaramu ngasi entek yu, ngombe o sik, nek gareng",CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:13:09.272639+00:00
+kak diego 25cm mending ambil size brp ya,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:13:50.512799+00:00
+kalo 26 cm ambil ukuran berapa ka,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:14:46.820720+00:00
+slip on casual size 45/46 ada kak ??,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:15:02.480885+00:00
+kok banyak yang kosong ya ukuran 43 nya?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:15:09.977599+00:00
+yang trax ga ada ya,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:15:45.116506+00:00
+spil eta 4 ka,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:17:08.764903+00:00
+et 19 spil ka,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:17:23.546200+00:00
+spatu buat ke gunung,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:17:25.177904+00:00
+spil spatu buat ke gunung,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:18:00.667062+00:00
+Yg massive low ga ada di etalase ya,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:18:01.520300+00:00
+spill sepatu cewek kk,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:19:22.615353+00:00
+baru juga buka,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:19:29.895091+00:00
+review veronq,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:19:35.749961+00:00
+spoil etalase 4,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:20:00.581573+00:00
+yg boot shoes udh kluar ka?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:20:08.850495+00:00
+baju fintage,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:20:55.177603+00:00
+spil eta 12 kak,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:21:04.317100+00:00
+kak spil yang coklat,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:21:10.950743+00:00
+yg boots shoes udh launching?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:21:32.550944+00:00
+etalse 3 turunin kaa,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:21:47.409188+00:00
+mau lah,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:21:48.299519+00:00
+buat hiking etalase berapa kak buget 500k,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:22:18.644146+00:00
+spill eta 12 kak,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:22:41.844094+00:00
+etalase 1 kak ambyarin lagi dong wkwk,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:23:44.071715+00:00
+etalase 4,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:23:51.488450+00:00
+verona,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:24:23.469428+00:00
+ruiz black spil,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:26:20.289341+00:00
+eta 36,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:26:53.184855+00:00
+ka mau etalase 3 tp 180 rb ka 😭,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:27:26.725113+00:00
+aerostreet workshirt,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:28:01.973639+00:00
+sepatu yg bahan kulit sintetis yg mana min,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:28:37.834917+00:00
+"sudah, makasih",CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:28:58.277711+00:00
+m ngk ada bg,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:29:11.493210+00:00
+sepatu olahraga cewe etalase brp kak,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:30:04.301481+00:00
+nomer 14 gak dikasih diskon nih kak,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:31:07.722765+00:00
+kk pj kaki ku 24.5 pakai uk berapa mau co verona,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:31:46.197556+00:00
+eta 2 size 39 kpn ready,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:31:58.585012+00:00
+tapi di size chart nya 24.5 uk 38 kk,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:32:57.998188+00:00
+udah co min,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:35:25.360778+00:00
+kemeja hitam lengan panjang untuk BB 68 kk,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:35:36.870041+00:00
+udah co kak,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:36:45.619610+00:00
+spill 48 ka dan cocok buar apa,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:40:19.145941+00:00
+klo yang 5 ka,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:40:45.720584+00:00
+yang 5 dong kak,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:41:15.402146+00:00
+"ka mau liat yg 12, 13 sama 20 ka,mending ambil yg mana",INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:41:22.722394+00:00
+kak klo nnti slh ukuran gmn,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:41:46.936015+00:00
+ka 48 tdi tu ringan ngga kak,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:41:55.188180+00:00
+etalase 22 ringan ga ka,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:43:04.114698+00:00
+Mba sepatu cowo yang stylish dan dominan hitam apa ya?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:43:33.790929+00:00
+entalase 8 liat teh udah coba tinggal nunggu sampe,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:43:47.086040+00:00
+rekomen buat cowo untuk joging etalase brp kak,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:45:47.294405+00:00
+ka spil yg kaos essential frend,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:46:03.166615+00:00
+cosmo version etalase berapa kak,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:46:09.663585+00:00
+eta 2 coklat sma abunya mau lihat deket ka,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:48:14.533320+00:00
+eta 2 kaa,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:48:30.367903+00:00
+kak sudah co ya,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:48:32.868696+00:00
+soalny saya udah bayar lngsung,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:48:53.693767+00:00
+pakai Qris,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:48:59.448069+00:00
+eta 3 buat harian enak ga,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:49:06.869989+00:00
+eta 1😭,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:49:16.023847+00:00
+sepatu cwe yg cocok buat olahraga ringan eta brp kaaa?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:49:30.782206+00:00
+baju kk,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:49:49.144586+00:00
+syaa beli baju,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:49:55.794249+00:00
+cara nentuin ukurannya gimana ya kak size spatunya,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:50:20.697347+00:00
+aku juga udh co😅,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:50:25.674576+00:00
+sepatu cewe yg cocok buat olahraga ringan eta brp ka?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:50:37.355397+00:00
+bisa cod gk kak,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:51:47.135660+00:00
+sepatu cwe yg ccok buat olahraga ringan eta brp kaaakk?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:52:06.998130+00:00
+"saya biasa pake ukuran 43,kalau spatu ini ambil ukuran brpa",INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:52:56.572010+00:00
+riques lagu kk,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:53:26.030261+00:00
+KA kalo almond panjang kaki aku 20 tapi kalo  UK 37 ngepas ambil 38 boleh ga,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:53:28.530430+00:00
+ganti lagu dogg bubb,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:55:01.771561+00:00
+eta 22 sama 26 enak mana kak dipakenya?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:55:07.633760+00:00
+iya ka 23 tapi kalo 37 ngepas bangett,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:55:52.870038+00:00
+liat sepatu sneaker bootsnya dong kak,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:56:17.580595+00:00
+boleh ditukarr berarti kakak,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:57:20.296903+00:00
+rekomendasi buat trekking kak,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:57:39.450148+00:00
+tapi ka 38 UK nya ga gede banget kan kaya agak gede dikit dari 37?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T15:58:23.594460+00:00
+ukuran s gmn kak?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T16:00:51.002466+00:00
+BB 53 TB 160,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T16:01:15.722934+00:00
+biar pres enak apa kak?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T16:01:34.759150+00:00
+ok kak di tunggu,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T16:01:53.861650+00:00
+spill ortiz coklat abu muda kak,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T16:02:10.413407+00:00
+Spil eps sulawewi bg?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T16:02:51.652402+00:00
+komenku ada engga kk apa ke filter,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T16:03:32.811934+00:00
+padahal suka banget sama brand ini,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T16:04:29.336349+00:00
+Ka aku udah co eta 48,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T16:05:00.842018+00:00
+buruan kak turunin udah mau co udah ngantuk ini,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T16:05:10.052658+00:00
+Kapan dikirimnya ka?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T16:05:30.075183+00:00
+Aku pesen 2 pcs buat suami ku juga,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T16:05:49.188937+00:00
+yg x Superman msih ada GK ka,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T16:06:22.648056+00:00
+"viper 23,5cm size brp",QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T16:06:38.828960+00:00
+buat hiking bukit mas,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T16:06:51.322714+00:00
+ada engga kk,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T16:07:06.343448+00:00
+spil dong bang etalase 2 yg gum biru tua,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T16:08:43.998780+00:00
+Etalase 48 gk promo bang?,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T16:08:46.446177+00:00
+yg hijau army udah ada kak???,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T16:08:49.649749+00:00
+Etalase 48 bang,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T16:09:13.582744+00:00
+smga cocok dah saya dah co,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T16:09:23.505899+00:00
+yg lest ride,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T16:09:49.305409+00:00
+libero atau viper,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-16T16:10:16.433519+00:00
+almond gada di etalase ya kak,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:33:28.595434+00:00
+aerostreet Sumatra udah launching belum ya,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:33:31.651098+00:00
+ka noir,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:33:32.745760+00:00
+itu apa yg kaka pegang,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:33:32.769181+00:00
+best seller nya yg manaa,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:33:32.805739+00:00
+berat ga ka,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:33:32.852549+00:00
+dah co,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:34:22.508411+00:00
+"sdh CO dan bayar kak, tlng d proses Hari ini 🙏",INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:34:23.624409+00:00
+Eta 35 sma eta 9 sama gak ka,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:40:07.723588+00:00
+Boleh spil ka,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:40:31.689519+00:00
+austin kak yg putih,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:40:34.253586+00:00
+Liat yg cowo,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:40:48.200530+00:00
+austin putih,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:41:15.620131+00:00
+etalase 18 kak yang biru,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:41:23.134599+00:00
+mba buat sekolah yg uk 36,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:41:28.223743+00:00
+Ukurannya lokal atau luar ka,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:41:35.708840+00:00
+Kak eta 113 tb 167 bb 63 size brp ya?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:41:36.942404+00:00
+Kak eta 113 tb 167 bb 63 size brp ya??,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:42:16.453211+00:00
+Kak spill eta 113 polo t-shirt yg berkerah,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:42:57.957472+00:00
+kak sepatu gudung ada yg 45 ga,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:43:12.855335+00:00
+Spill yg putih kak,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:43:25.953600+00:00
+Bb 63 tb 167 size brp?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:43:50.115614+00:00
+32 tinggi sol nya brpa cm ?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:44:11.645270+00:00
+"kak rekomen sepatu cowok kerja lapangan dipake hari""",CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:45:07.847049+00:00
+aku dapat harga 174k,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:46:13.607849+00:00
+aero strex,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:46:37.432475+00:00
+kak ini kita up size atau gak perlu?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:46:42.477598+00:00
+viper etalase no berapa ka,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:47:23.643364+00:00
+eta 2 bole Spil,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:48:06.880342+00:00
+naro di keranjang dulu ka hehe,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:48:21.655077+00:00
+kak jaket bomber ada?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:48:28.989550+00:00
+"sorry kak, tadi rekomendasi nya etl berapa ya?",QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:49:01.033404+00:00
+etalse 1 kk,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:49:21.630242+00:00
+sepatu casual ada gak kak?,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:49:48.327756+00:00
+spil etalase 4 kak,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:54:11.427451+00:00
+Spil dc,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:55:08.632320+00:00
+etalase 15,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:56:26.488073+00:00
+etalase 3 kak,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:56:56.880867+00:00
+spill kaos pollo zipper bahan scuba nya kk,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:57:47.563801+00:00
+spill et 94 dark army,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:58:22.003927+00:00
+Spil deketin,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:58:26.004209+00:00
+Putih,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:58:33.208087+00:00
+spill brooklyn sama hoop low min,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:59:00.074113+00:00
+saya udah co kk,INTENT_BUY,0.88,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:59:15.799906+00:00
+8 sama 7 sama apa,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:59:21.545850+00:00
+harganya ko berubah ka,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:59:37.973528+00:00
+tdi sepatu 180,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T03:59:51.254889+00:00
+KAK REKOMENDASI SEPATU PUTIH YANG LOW CUT,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T04:00:30.979605+00:00
+Kak lihat etalase 3,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T04:00:33.662955+00:00
+harganya tdi 180 KA sepatu,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T04:00:44.156094+00:00
+15 putih,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T04:01:17.953864+00:00
+KAK REKOMENDASI SEPATU FULL PUTIH YANG LOW CUT,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T04:01:40.403503+00:00
+ka rekomen kemeja yg bisa nutupin perut buncit pria bb 86 ka,QUESTION,0.82,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T04:02:01.020221+00:00
+15 putih ka,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T04:02:21.742081+00:00
+mntapppp kakk...pket dah nyampeee...reel pokonya....,CASUAL,0.75,@aerostreet,shoes,silver_archive_bootstrap,2026-11-17T04:02:51.628008+00:00
+sekarang cosplay monokurobo ceu? wkwk,QUESTION,0.82,@ajengandhika_,fashion,silver_archive_bootstrap,2026-11-17T04:14:44.657933+00:00
+ampe kapan itu ceu? wkwkw,QUESTION,0.82,@ajengandhika_,fashion,silver_archive_bootstrap,2026-11-17T04:14:47.227214+00:00
+ati ati encok ceuuu 🤣,CASUAL,0.75,@ajengandhika_,fashion,silver_archive_bootstrap,2026-11-17T04:14:49.582252+00:00
+Udah wey orang lagi jualan 😩,CASUAL,0.75,@ajengandhika_,fashion,silver_archive_bootstrap,2026-11-17T04:14:52.196783+00:00
+aws encok,CASUAL,0.75,@ajengandhika_,fashion,silver_archive_bootstrap,2026-11-17T04:15:04.353161+00:00
+anjay [wow],CASUAL,0.75,@crvsh.ofc,culinary,silver_archive_bootstrap,2026-11-17T04:21:43.630384+00:00
+yori kiyowoknyaa^^,CASUAL,0.75,@crvsh.ofc,culinary,silver_archive_bootstrap,2026-11-17T04:21:48.373016+00:00
+ARE U READY FOR THE RIDE...?,QUESTION,0.82,@crvsh.ofc,culinary,silver_archive_bootstrap,2026-11-17T04:21:54.892274+00:00
+@Nyok💊🧬 welcomr.,CASUAL,0.75,@crvsh.ofc,culinary,silver_archive_bootstrap,2026-11-17T04:22:10.603930+00:00
+jangan sampai ada yang jatuh 😂,CASUAL,0.75,@crvsh.ofc,culinary,silver_archive_bootstrap,2026-11-17T04:22:15.295331+00:00
+typo trs rek,CASUAL,0.75,@crvsh.ofc,culinary,silver_archive_bootstrap,2026-11-17T04:22:57.067526+00:00
+seluruh wajah sih akuuu kak,CASUAL,0.75,@gadget_store,gadgets,silver_archive_bootstrap,2026-11-16T07:07:47.829189+00:00
+kumar,CASUAL,0.75,@leo.kabuki,skincare,silver_archive_bootstrap,2026-11-17T04:15:45.232145+00:00
+mam,CASUAL,0.75,@leo.kabuki,skincare,silver_archive_bootstrap,2026-11-17T04:16:11.624932+00:00
+kumat,CASUAL,0.75,@leo.kabuki,skincare,silver_archive_bootstrap,2026-11-17T04:16:17.889992+00:00
+Topi no 10 pengait belakangnya besi atau plastik?,QUESTION,0.82,@Mamitikajualanbaju,fashion,silver_archive_bootstrap,2026-11-16T06:13:52.467683+00:00
+Kemeja flanel no 1 ukuran XL lingkar dada berapa min?,QUESTION,0.82,@Mamitikajualanbaju,fashion,silver_archive_bootstrap,2026-11-16T06:13:52.467683+00:00
+Bisa COD ke Bandung gak kak?,INTENT_BUY,0.88,@Mamitikajualanbaju,fashion,silver_archive_bootstrap,2026-11-16T06:13:52.467683+00:00
+Kaos no 4 bahannya 100% cotton combed 24s kan kak?,QUESTION,0.82,@Mamitikajualanbaju,fashion,silver_archive_bootstrap,2026-11-16T06:13:52.467683+00:00
+Semangat live nya kak bajunya keren-keren banget!,CASUAL,0.75,@Mamitikajualanbaju,fashion,silver_archive_bootstrap,2026-11-16T06:13:53.940355+00:00
+Jaket denim no 6 bahannya tebal dan kaku gak kak?,QUESTION,0.82,@Mamitikajualanbaju,fashion,silver_archive_bootstrap,2026-11-16T06:14:05.083623+00:00
+Udah checkout kemeja no 1 dan celana chino no 3 ya min!,INTENT_BUY,0.88,@Mamitikajualanbaju,fashion,silver_archive_bootstrap,2026-11-16T06:14:23.074220+00:00
+Lihat 58 kak,CASUAL,0.75,@onedaid,culinary,silver_archive_bootstrap,2026-11-17T04:25:13.245782+00:00
+Eta berapa itu kak,QUESTION,0.82,@onedaid,culinary,silver_archive_bootstrap,2026-11-17T04:25:21.584279+00:00
+Kak merchie gaada promo ya,INTENT_BUY,0.88,@onedaid,culinary,silver_archive_bootstrap,2026-11-17T04:25:35.010423+00:00
+@Stawbellys7 4.8.13,CASUAL,0.75,@onedaid,culinary,silver_archive_bootstrap,2026-11-17T04:25:42.710508+00:00
+Eta 16 beige maroon kapan ready stock kk?,INTENT_BUY,0.88,@onedaid,culinary,silver_archive_bootstrap,2026-11-17T04:25:50.564266+00:00
+Keren banget barangnya min salam dari anak bulutangkis!,CASUAL,0.75,@Raysportindo,sports,silver_archive_bootstrap,2026-11-13T06:53:31.021939+00:00
+Jersey badminton no 4 bahannya adem dan nyerap keringat gak kak?,QUESTION,0.82,@Raysportindo,sports,silver_archive_bootstrap,2026-11-13T06:53:31.021939+00:00
+Kaos kaki no 9 bahannya tebel gak min?,QUESTION,0.82,@Raysportindo,sports,silver_archive_bootstrap,2026-11-13T06:53:31.021939+00:00
+Spill grip raket no 5 kak mau co bareng raket no 1,INTENT_BUY,0.88,@Raysportindo,sports,silver_archive_bootstrap,2026-11-13T06:53:31.021939+00:00
+Udah checkout jersey no 4 ukuran L ya tolong diproses min,INTENT_BUY,0.88,@Raysportindo,sports,silver_archive_bootstrap,2026-11-13T06:53:31.021939+00:00
+Packing raket no 1 aman sampai Papua gak min mau beli sekarang,INTENT_BUY,0.88,@Raysportindo,sports,silver_archive_bootstrap,2026-11-13T06:53:32.273441+00:00
+Shuttlecock no 3 dapet 1 slop isi 12 kan kak mau beli 2 slop sekarang,INTENT_BUY,0.88,@Raysportindo,sports,silver_archive_bootstrap,2026-11-13T06:53:37.701605+00:00
+Senar no 7 bisa langsung dipasangin di raket gak min?,QUESTION,0.82,@Raysportindo,sports,silver_archive_bootstrap,2026-11-13T06:53:41.508386+00:00
+Bisa COD raket no 1 ke Surabaya min?,INTENT_BUY,0.88,@Raysportindo,sports,silver_archive_bootstrap,2026-11-13T07:14:19.706052+00:00
+Sepatu no 2 sol bawahnya empuk gak kak buat lompat smash?,QUESTION,0.82,@Raysportindo,sports,silver_archive_bootstrap,2026-11-13T07:14:33.039663+00:00
+Sepatu bulutangkis no 2 ready size 42 warna putih hitam gak min?,QUESTION,0.82,@Raysportindo,sports,silver_archive_bootstrap,2026-11-13T07:14:36.654424+00:00
+Kok no 3 lajunya stabil gak kak buat latihan tanding?,QUESTION,0.82,@Raysportindo,sports,silver_archive_bootstrap,2026-11-13T07:14:57.443011+00:00
+Udah checkout raket no 1 ya min tolong di-packing kayu yang aman!,INTENT_BUY,0.88,@Raysportindo,sports,silver_archive_bootstrap,2026-11-13T07:15:07.610606+00:00
+Kak tolong spill raket badminton no 1 dong tarikan senar berapa lbs mau checkout!,INTENT_BUY,0.88,@Raysportindo,sports,silver_archive_bootstrap,2026-11-13T07:16:01.520998+00:00
+Tas raket no 6 muat berapa raket kak tolong spill ruang dalamnya,QUESTION,0.82,@Raysportindo,sports,silver_archive_bootstrap,2026-11-13T07:16:54.526783+00:00
+sorry kk HP gua samsung habis di update malah nge lock itu gmn,CASUAL,0.75,@samsungindonesia,gadgets,silver_archive_bootstrap,2026-11-16T14:46:51.735665+00:00
+spill yg unggu om,QUESTION,0.82,@samsungindonesia,gadgets,silver_archive_bootstrap,2026-11-16T14:46:52.509687+00:00
+s25 fe udah ad horizontal ny gk bg,CASUAL,0.75,@samsungindonesia,gadgets,silver_archive_bootstrap,2026-11-16T14:46:52.522130+00:00
+ka ada charger ga ka?,QUESTION,0.82,@samsungindonesia,gadgets,silver_archive_bootstrap,2026-11-16T14:46:52.572922+00:00
+iyaa lock di wallpaper doang nih,CASUAL,0.75,@samsungindonesia,gadgets,silver_archive_bootstrap,2026-11-16T14:46:52.619324+00:00
+s25 basic spill,QUESTION,0.82,@samsungindonesia,gadgets,silver_archive_bootstrap,2026-11-16T14:46:52.654309+00:00
+Kak tolong spill etalase nomor 1 dari Sarlina Co dong mau checkout sekarang!,INTENT_BUY,0.88,@Sarlina.co,skincare,silver_archive_bootstrap,2026-11-16T06:12:38.957951+00:00
+Produk no 1 kualitasnya original dan terjamin kan min?,QUESTION,0.82,@Sarlina.co,skincare,silver_archive_bootstrap,2026-11-16T06:12:38.957951+00:00
+Etalase 2 ready stok banyak gak min mau order 2 pcs?,INTENT_BUY,0.88,@Sarlina.co,skincare,silver_archive_bootstrap,2026-11-16T06:12:38.957951+00:00
+Ada garansi uang kembali gak kak kalo barang tidak sesuai?,QUESTION,0.82,@Sarlina.co,skincare,silver_archive_bootstrap,2026-11-16T06:12:38.957951+00:00
+Pengiriman dari kota mana ya kak Sarlina Co?,INTENT_BUY,0.88,@Sarlina.co,skincare,silver_archive_bootstrap,2026-11-16T06:12:38.957951+00:00
+Spill etalase 3 dong min mau lihat detail paketnya,INTENT_BUY,0.88,@Sarlina.co,skincare,silver_archive_bootstrap,2026-11-16T06:12:50.414467+00:00
+Bisa COD ke luar kota gak kak @Sarlina.co?,INTENT_BUY,0.88,@Sarlina.co,skincare,silver_archive_bootstrap,2026-11-16T06:12:53.846481+00:00
+Semangat live nya kak @Sarlina.co lancar terus usahanya!,INTENT_BUY,0.88,@Sarlina.co,skincare,silver_archive_bootstrap,2026-11-16T06:12:57.724320+00:00
+Spill etalase nomor 4 min mau lihat tampak belakangnya,INTENT_BUY,0.88,@Sarlina.co,skincare,silver_archive_bootstrap,2026-11-16T06:13:10.419528+00:00
+Udah checkout etalase nomor 1 ya min tolong segera diproses!,INTENT_BUY,0.88,@Sarlina.co,skincare,silver_archive_bootstrap,2026-11-16T06:13:29.361555+00:00
+Udah co etalase nomor 2 ya min jangan lupa bonusnya ya!,INTENT_BUY,0.88,@Sarlina.co,skincare,silver_archive_bootstrap,2026-11-16T06:13:44.041733+00:00
+Lip tint no 6 transferproof gak kak tahan berapa jam?,QUESTION,0.82,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-13T06:53:48.773423+00:00
+Facial wash no 4 busanya lembut gak kak bikin ketarik ga?,QUESTION,0.82,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-13T06:53:48.773423+00:00
+Toner no 7 bisa dipake tiap hari gak min?,QUESTION,0.82,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-13T06:53:48.773423+00:00
+Spill etalase 1 min mau lihat tekstur cairannya,INTENT_BUY,0.88,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-13T06:53:54.347465+00:00
+Yahhh pdhl itu gacor bangettt😭 tak tergantikan,CASUAL,0.75,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T06:37:15.062181+00:00
+Untuk keluhan kulit aku aman ya kak? Yg gampang jerawatan,QUESTION,0.82,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T06:37:16.162256+00:00
+Aku cushion hmpir tiap hari kak pake cover blurr,CASUAL,0.75,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T06:37:17.154801+00:00
+Untuk mascara waterproof gampang ga kak ilangnya,CASUAL,0.75,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T06:37:18.399125+00:00
+Okey makasi kakk,CASUAL,0.75,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T06:37:19.650180+00:00
+Coverblurr yg refil eta 25 kan kak?,QUESTION,0.82,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T06:37:20.644884+00:00
+kak spill perbedaan cushionnya boleh ga ya?,QUESTION,0.82,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T06:40:08.362435+00:00
+kak somethinc acnedot moisturizer udah ga ada kah?,QUESTION,0.82,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T06:41:14.156912+00:00
+"barusan pkt ku datang beli lip 2pcs giffnya 5😭,ada sunscreen yg 50ml pulaa giffnya😭",INTENT_BUY,0.88,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T06:43:27.591155+00:00
+yg cushion bluring finishing nya glow apa matte ka?,QUESTION,0.82,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T06:43:50.025760+00:00
+lip matte sma glaze,CASUAL,0.75,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T06:45:32.986340+00:00
+bli 1 1 eta nya ka,QUESTION,0.82,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T06:46:01.027075+00:00
+Mois ceraplum bisa buat bumil ga?,QUESTION,0.82,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T06:46:53.988588+00:00
+kak untuk cool undertone cushion ambil shade brp?,INTENT_BUY,0.88,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T06:47:19.691636+00:00
+cerah natural,CASUAL,0.75,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T06:48:30.123389+00:00
+ka serum salicylic acid bole dibarengin serum glass c ga,CASUAL,0.75,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T06:48:54.112464+00:00
+iya di daerah jerwat aja,CASUAL,0.75,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T06:49:44.602165+00:00
+kak blur loose powdernya translucentnya ada 2 versi ya? bedanya apa ya?,QUESTION,0.82,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T06:53:20.091985+00:00
+moisturizer etls 2 dan 3 beda nya apa,CASUAL,0.75,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T06:54:18.804897+00:00
+"dulu aku beli yg packaging lama, translucent ajaa. prefer yg manaa yaa kalau yg baru inii",INTENT_BUY,0.88,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T06:54:34.013495+00:00
+adn,CASUAL,0.75,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T14:47:31.599563+00:00
+advace peling kk,CASUAL,0.75,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T14:47:32.515353+00:00
+semangattt kaka milataaa,CASUAL,0.75,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T14:47:32.540931+00:00
+kakk buat flek serumnya yg mana,CASUAL,0.75,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T14:47:32.584534+00:00
+saya sdh co etalase 15 ceraplump,INTENT_BUY,0.88,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T14:47:32.625932+00:00
+yang glass c itua kak?,QUESTION,0.82,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T14:47:32.670503+00:00
+Serum peelingnya eta brp,QUESTION,0.82,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T14:48:17.478207+00:00
+Kak lip glaze kalo ombre pilih shade apa?,QUESTION,0.82,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T14:48:18.247161+00:00
+ka ada holy potion highlater gakkkk?,QUESTION,0.82,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T14:48:29.795966+00:00
+Utj jerawatan serum peelingnya yg mana ya kak,CASUAL,0.75,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T14:49:31.895514+00:00
+Enaknya ombre nya pake lip glaze juga atau ngga?,QUESTION,0.82,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T14:51:36.915517+00:00
+kaka itu eyeshadow yg km pake yg mana?😭,QUESTION,0.82,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T14:53:10.288252+00:00
+yg toner kak,CASUAL,0.75,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T14:54:05.461151+00:00
+"baguss kakk warna nya keluarrr, mau co",INTENT_BUY,0.88,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-16T14:54:05.513322+00:00
+yg retinol nya mana ka,CASUAL,0.75,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-17T03:35:16.549056+00:00
+et brp ka,CASUAL,0.75,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-17T03:35:18.187677+00:00
+"ka tdi kata mba"" nya mois yg td udah ada kandungan retinolnya",CASUAL,0.75,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-17T03:35:19.440318+00:00
+ak tdi nanya di ekomers terdekat nah ak nanya retinolnya dikasinya yg mois et 3 ktnya,CASUAL,0.75,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-17T03:35:20.570105+00:00
+udh ada kandungan retinolnya,CASUAL,0.75,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-17T03:35:20.600719+00:00
+Setting spray eta brpa kak?,QUESTION,0.82,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-17T03:35:20.652218+00:00
+"kak swatch antara lace, ribbon n sakura dongg terus buat yg two tone lips bagus manaa",CASUAL,0.75,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-17T03:35:23.550487+00:00
+reguler kak pilihannya paling cpt,CASUAL,0.75,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-17T03:55:16.721240+00:00
+"eta 7 kak, shade baru sm shade light beda jauh gak kak hslnya?",QUESTION,0.82,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-17T03:55:18.680619+00:00
+lose powder nya packaging baru ya kak?,QUESTION,0.82,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-17T03:55:20.732311+00:00
+spill dong ka,QUESTION,0.82,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-17T03:55:22.963889+00:00
+etalase 37 ka,QUESTION,0.82,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-17T03:55:25.075698+00:00
+spil,CASUAL,0.75,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-17T03:55:27.083022+00:00
+Spill cushion yg cocok untuk muka berminyak kaka,QUESTION,0.82,@somethincofficial,skincare,silver_archive_bootstrap,2026-11-17T03:55:40.545501+00:00
+Etalase 1 ready gak kak raihan,QUESTION,0.82,@thde25_,hijab,silver_archive_bootstrap,2026-11-17T04:08:23.860324+00:00
+Kok sobek celananya bolong gedheee,CASUAL,0.75,@thde25_,hijab,silver_archive_bootstrap,2026-11-17T04:09:15.897326+00:00
+ijin hadir aktip trimakasih amin amin,CASUAL,0.75,@thde25_,hijab,silver_archive_bootstrap,2026-11-17T04:10:21.254094+00:00
+Channel SCAM,CASUAL,0.75,@thde25_,hijab,silver_archive_bootstrap,2026-11-17T04:10:23.693319+00:00
+Celana cargo no 5 muat untuk BB 70 kg gak min?,QUESTION,0.82,@tokobajumurah,fashion,silver_archive_bootstrap,2026-11-13T06:53:22.776296+00:00
+Kak tolong spill kemeja flanel no 1 dong mau checkout!,INTENT_BUY,0.88,@tokobajumurah,fashion,silver_archive_bootstrap,2026-11-16T06:08:46.663979+00:00
+Spill hoodie no 7 min mau lihat bagian tudung kepalanya,INTENT_BUY,0.88,@tokobajumurah,fashion,silver_archive_bootstrap,2026-11-16T06:09:38.893191+00:00
+celana muat smpe bb brp,QUESTION,0.82,@woonjualan,fashion,silver_archive_bootstrap,2026-11-16T14:43:54.650826+00:00
+kakn,CASUAL,0.75,@woonjualan,fashion,silver_archive_bootstrap,2026-11-16T14:43:57.229628+00:00
+Ka cobain yg putih kerah dibawah itu ka,CASUAL,0.75,@woonjualan,fashion,silver_archive_bootstrap,2026-11-16T14:43:58.016863+00:00
+Kode berapa jaket yg kk pake,CASUAL,0.75,@woonjualan,fashion,silver_archive_bootstrap,2026-11-16T14:43:58.062613+00:00
+lucu2,CASUAL,0.75,@woonjualan,fashion,silver_archive_bootstrap,2026-11-16T14:43:58.116137+00:00
+atasan yaaa kak abs ini,CASUAL,0.75,@woonjualan,fashion,silver_archive_bootstrap,2026-11-16T14:43:59.496759+00:00
+gemes,CASUAL,0.75,@woonjualan,fashion,silver_archive_bootstrap,2026-11-16T14:44:02.156092+00:00
+kaos kak,CASUAL,0.75,@woonjualan,fashion,silver_archive_bootstrap,2026-11-16T14:44:02.908036+00:00
+Jenz kak,CASUAL,0.75,@woonjualan,fashion,silver_archive_bootstrap,2026-11-16T14:44:04.610037+00:00
+udah co kode 25 mau liat yg ld 200 lg kak,INTENT_BUY,0.88,@woonjualan,fashion,silver_archive_bootstrap,2026-11-16T14:44:10.384291+00:00
+jaket diskon lg,INTENT_BUY,0.88,@woonjualan,fashion,silver_archive_bootstrap,2026-11-16T14:44:11.193780+00:00
+udh chat toko mau minta ftoin 261,CASUAL,0.75,@woonjualan,fashion,silver_archive_bootstrap,2026-11-16T14:44:22.871201+00:00
+eta brpp,QUESTION,0.82,@woonjualan,fashion,silver_archive_bootstrap,2026-11-16T14:44:29.353665+00:00
+aku dh co 820 d tunggu ya,INTENT_BUY,0.88,@woonjualan,fashion,silver_archive_bootstrap,2026-11-16T14:44:30.199554+00:00
+kak yg di belakang warna pink gantung ad tulisan kisa masih ?,QUESTION,0.82,@woonjualan,fashion,silver_archive_bootstrap,2026-11-16T14:44:31.858015+00:00
+aku dh co 820 d tunggu ya kk,INTENT_BUY,0.88,@woonjualan,fashion,silver_archive_bootstrap,2026-11-16T14:44:37.673065+00:00
+Ka kemeja putih bawah ka,CASUAL,0.75,@woonjualan,fashion,silver_archive_bootstrap,2026-11-16T14:44:40.062872+00:00
+putih kaaa,CASUAL,0.75,@woonjualan,fashion,silver_archive_bootstrap,2026-11-16T14:44:43.418402+00:00
+Kak jaketnya LD berapaaaa,CASUAL,0.75,@woonjualan,fashion,silver_archive_bootstrap,2026-11-16T14:44:54.940339+00:00
+k aku dh co 820,INTENT_BUY,0.88,@woonjualan,fashion,silver_archive_bootstrap,2026-11-16T14:44:55.684899+00:00
+Kak jaket putih tdi ga jdi dispill,CASUAL,0.75,@woonjualan,fashion,silver_archive_bootstrap,2026-11-16T14:45:02.366047+00:00
+ld brp 954?,QUESTION,0.82,@woonjualan,fashion,silver_archive_bootstrap,2026-11-16T14:45:09.632726+00:00
+955 spil kk,CASUAL,0.75,@woonjualan,fashion,silver_archive_bootstrap,2026-11-16T14:45:21.230497+00:00
+kak yg 954 yg mana?,QUESTION,0.82,@woonjualan,fashion,silver_archive_bootstrap,2026-11-16T14:45:26.988755+00:00
+cushion untuk kuning langsat ambil shde brp kak,INTENT_BUY,0.88,@somethincofficial,skincare,tiktok_live_harvest,2026-11-28T06:35:36.939085+00:00
+Oke makasih kak aku ambil nina,INTENT_BUY,0.88,@somethincofficial,skincare,tiktok_live_harvest,2026-11-28T06:35:36.939085+00:00
+Nina nya habiss kak,CASUAL,0.75,@somethincofficial,skincare,tiktok_live_harvest,2026-11-28T06:35:36.939085+00:00
+loose power eta brp kk,QUESTION,0.82,@somethincofficial,skincare,tiktok_live_harvest,2026-11-28T06:35:36.939085+00:00
+Spill  perbedaan nina sma bijoux kak,QUESTION,0.82,@somethincofficial,skincare,tiktok_live_harvest,2026-11-28T06:35:36.939085+00:00
+kak paket calm down etalase brpa,QUESTION,0.82,@somethincofficial,skincare,tiktok_live_harvest,2026-11-28T06:35:36.939085+00:00
+"@byesta Hai Kakm ambil Acne Relief Serum di eta 36, untuk kulit berjerawat dengan tekstur ringan, langsung checkout, disc up to 33% 🤗🛒",INTENT_BUY,0.88,@wardahofficial,skincare,tiktok_live_harvest,2026-11-28T06:35:37.537657+00:00
+ka BB tint mini 6 ml,QUESTION,0.82,@wardahofficial,skincare,tiktok_live_harvest,2026-11-28T06:35:37.537657+00:00
+"@USER NAME Hai Kak, All Series Moist di eta 6 ya, Kondisi kulit kamu gimana nih? Yuk CO sesuai dengan kebutuhkan kulitmu, lagi disc up to 31%💗",INTENT_BUY,0.88,@wardahofficial,skincare,tiktok_live_harvest,2026-11-28T06:35:37.537657+00:00
+"Hurry up, Beauties. Cuma tinggal beberapa menit lagi lagi buat dapetin diskon seru ini! Buruan Check Out yuk💕✨",INTENT_BUY,0.88,@wardahofficial,skincare,tiktok_live_harvest,2026-11-28T06:35:37.537657+00:00
+etalase berapa kak,QUESTION,0.82,@wardahofficial,skincare,tiktok_live_harvest,2026-11-28T06:35:37.537657+00:00
+"Beauties, kalau lagi cari good deal, this is the moment! Klik keranjang kuning yaa, check out sekarang biar happy shopping🛒✨",CASUAL,0.75,@wardahofficial,skincare,tiktok_live_harvest,2026-11-28T06:35:37.537657+00:00

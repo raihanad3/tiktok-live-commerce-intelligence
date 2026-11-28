@@ -1,17 +1,25 @@
 """
 TikPulse - Medallion Silver to Gold Aggregator (F-06, F-07, F-10)
 Fungsi:
-  Mengubah data transaksi Silver Parquet menjadi 3 Analytical Marts dengan isolasi penuh per sesi siaran:
-    1. mart_live_summary   : Ringkasan metrik live stream per sesi (Total chat, saweran Rp, sentimen)
-    2. mart_product_demand : Peringkat etalase per sesi (Isolasi per streamer)
-    3. mart_top_gifters    : Leaderboard penonton per sesi (Isolasi per streamer)
+  Mengubah data transaksi Silver Parquet menjadi 4 Analytical Marts dengan isolasi penuh per sesi siaran:
+    1. mart_live_summary     : Ringkasan metrik live stream per sesi (Total chat, saweran Rp, sentimen)
+    2. mart_product_demand   : Peringkat etalase per sesi (Isolasi per streamer)
+    3. mart_top_gifters      : Leaderboard penonton per sesi (Isolasi per streamer)
+    4. mart_niche_benchmark  : Agregasi Batch lintas-toko per niche (Rate Niat Beli, Jam Emas WIB, Topik & Komplain Pasar)
 """
 
 import os
+import re
+import sys
+import json
 import glob
 import sqlite3
+from collections import Counter
 import pandas as pd
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from common.store_catalog import detect_store_niche
 
 # Konfigurasi Database PostgreSQL
 POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
@@ -109,6 +117,20 @@ def init_gold_tables(conn, db_type="SQLITE"):
                 PRIMARY KEY (session_id, user_id)
             );
         """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS mart_niche_benchmark (
+                niche VARCHAR(50) PRIMARY KEY,
+                total_comments INT DEFAULT 0,
+                total_sessions INT DEFAULT 0,
+                intent_buy_rate_pct DOUBLE PRECISION DEFAULT 0.0,
+                question_rate_pct DOUBLE PRECISION DEFAULT 0.0,
+                complaint_rate_pct DOUBLE PRECISION DEFAULT 0.0,
+                golden_hour_wib VARCHAR(50),
+                top_keywords TEXT,
+                top_complaints TEXT,
+                last_updated TIMESTAMP WITH TIME ZONE
+            );
+        """)
     else:
         # SQLite Syntax - Pastikan skema memiliki session_id
         cur.execute("PRAGMA table_info(mart_product_demand);")
@@ -156,6 +178,20 @@ def init_gold_tables(conn, db_type="SQLITE"):
                 gift_count INTEGER DEFAULT 0,
                 last_gift_at TEXT,
                 PRIMARY KEY (session_id, user_id)
+            );
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS mart_niche_benchmark (
+                niche TEXT PRIMARY KEY,
+                total_comments INTEGER DEFAULT 0,
+                total_sessions INTEGER DEFAULT 0,
+                intent_buy_rate_pct REAL DEFAULT 0.0,
+                question_rate_pct REAL DEFAULT 0.0,
+                complaint_rate_pct REAL DEFAULT 0.0,
+                golden_hour_wib TEXT,
+                top_keywords TEXT,
+                top_complaints TEXT,
+                last_updated TEXT
             );
         """)
 
@@ -285,6 +321,92 @@ def aggregate_silver_to_gold():
                     complaint_count = excluded.complaint_count,
                     last_updated = excluded.last_updated;
             """, (session_id, streamer, total_comments, total_rev, buy_cnt, quest_cnt, comp_cnt, now_str))
+
+    # 4. Update mart_niche_benchmark (Batch Competitor & Market Intelligence lintas sesi per niche)
+    df_comments_all = df_all[df_all["event_type"] == "comment"].copy()
+    if not df_comments_all.empty:
+        df_comments_all["niche"] = df_comments_all["streamer"].fillna("@unknown").apply(lambda s: detect_store_niche(str(s)))
+        stopwords = {
+            "kak", "kakak", "ka", "min", "mimin", "host", "tolong", "dong", "spill", "sepil",
+            "etalase", "etls", "eta", "nomor", "no", "checkout", "co", "ready", "ga", "gak",
+            "ngga", "nggak", "ada", "yg", "yang", "bisa", "nih", "ya", "ini", "itu", "mau",
+            "saya", "aku", "sudah", "udah", "sdh", "udh", "di", "ke", "dari", "untuk", "buat",
+            "banget", "apa", "nya", "dan", "atau", "kalau", "kalo", "aja", "sih", "deh", "dong"
+        }
+
+        for niche_key, grp in df_comments_all.groupby("niche"):
+            tot_c = len(grp)
+            tot_sess = int(grp["session_id"].nunique())
+            buy_rate = round(float(len(grp[grp["ml_intent"] == "INTENT_BUY"]) / max(tot_c, 1) * 100.0), 1)
+            quest_rate = round(float(len(grp[grp["ml_intent"] == "QUESTION"]) / max(tot_c, 1) * 100.0), 1)
+            comp_rate = round(float(len(grp[grp["ml_intent"] == "COMPLAINT"]) / max(tot_c, 1) * 100.0), 1)
+
+            # Hitung Golden Hour WIB (UTC+7)
+            golden_hour = "19:00 - 21:00 WIB"
+            try:
+                times = pd.to_datetime(grp["event_time"], errors="coerce", utc=True).dropna()
+                if not times.empty:
+                    wib_hours = (times + timedelta(hours=7)).dt.hour
+                    buy_mask = grp.loc[times.index, "ml_intent"] == "INTENT_BUY"
+                    target_hours = wib_hours[buy_mask] if buy_mask.any() else wib_hours
+                    peak_h = int(target_hours.mode().iloc[0])
+                    golden_hour = f"{peak_h:02d}:00 - {(peak_h + 1) % 24:02d}:00 WIB"
+            except Exception:
+                pass
+
+            # Ekstrak Top Keywords lintas room dalam niche
+            kw_counter = Counter()
+            for txt in grp["comment_text"].dropna().astype(str):
+                tokens = re.findall(r"[a-zA-Z]{3,}", txt.lower())
+                for tok in tokens:
+                    if tok not in stopwords:
+                        kw_counter[tok] += 1
+            top_kws = [w for w, _ in kw_counter.most_common(6)]
+
+            # Ekstrak contoh keluhan utama di niche
+            comp_texts = grp[grp["ml_intent"] == "COMPLAINT"]["comment_text"].dropna().astype(str).unique().tolist()[:3]
+
+            top_kws_json = json.dumps(top_kws, ensure_ascii=False)
+            top_comp_json = json.dumps(comp_texts, ensure_ascii=False)
+
+            if db_type == "POSTGRES":
+                cur.execute("""
+                    INSERT INTO mart_niche_benchmark (
+                        niche, total_comments, total_sessions, intent_buy_rate_pct,
+                        question_rate_pct, complaint_rate_pct, golden_hour_wib,
+                        top_keywords, top_complaints, last_updated
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                    ON CONFLICT (niche) DO UPDATE SET
+                        total_comments = EXCLUDED.total_comments,
+                        total_sessions = EXCLUDED.total_sessions,
+                        intent_buy_rate_pct = EXCLUDED.intent_buy_rate_pct,
+                        question_rate_pct = EXCLUDED.question_rate_pct,
+                        complaint_rate_pct = EXCLUDED.complaint_rate_pct,
+                        golden_hour_wib = EXCLUDED.golden_hour_wib,
+                        top_keywords = EXCLUDED.top_keywords,
+                        top_complaints = EXCLUDED.top_complaints,
+                        last_updated = NOW();
+                """, (niche_key, tot_c, tot_sess, buy_rate, quest_rate, comp_rate, golden_hour, top_kws_json, top_comp_json))
+            else:
+                cur.execute("""
+                    INSERT INTO mart_niche_benchmark (
+                        niche, total_comments, total_sessions, intent_buy_rate_pct,
+                        question_rate_pct, complaint_rate_pct, golden_hour_wib,
+                        top_keywords, top_complaints, last_updated
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT (niche) DO UPDATE SET
+                        total_comments = excluded.total_comments,
+                        total_sessions = excluded.total_sessions,
+                        intent_buy_rate_pct = excluded.intent_buy_rate_pct,
+                        question_rate_pct = excluded.question_rate_pct,
+                        complaint_rate_pct = excluded.complaint_rate_pct,
+                        golden_hour_wib = excluded.golden_hour_wib,
+                        top_keywords = excluded.top_keywords,
+                        top_complaints = excluded.top_complaints,
+                        last_updated = excluded.last_updated;
+                """, (niche_key, tot_c, tot_sess, buy_rate, quest_rate, comp_rate, golden_hour, top_kws_json, top_comp_json, now_str))
 
     conn.commit()
     conn.close()
